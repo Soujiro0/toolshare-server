@@ -1,0 +1,11 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
+
+# Block direct access to configuration and sensitive files
+<FilesMatch "(config\.php|db\.php|Database\.php|auth\.php)">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
