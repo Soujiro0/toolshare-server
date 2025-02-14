@@ -134,6 +134,13 @@ CREATE TABLE categories (
     name VARCHAR(100) UNIQUE NOT NULL
 );
 
+-- Roles (For Users, especially admins and super admins)
+CREATE TABLE roles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+INSERT INTO roles (name) VALUES ('super_admin'), ('admin');
+
 -- Map Items to Categories
 ALTER TABLE items ADD COLUMN category_id INT;
 ALTER TABLE items ADD FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL;
@@ -145,3 +152,12 @@ ALTER TABLE items ADD FOREIGN KEY (category_id) REFERENCES categories(id) ON DEL
 CREATE INDEX idx_request_status ON borrow_requests(signature_confirmed, admin_verified);
 CREATE INDEX idx_transaction_status ON transactions(status);
 CREATE INDEX idx_activity_user ON activity_logs(user_id);
+
+-- Map Users to Roles
+ALTER TABLE super_admins
+ADD COLUMN role_id INT NOT NULL DEFAULT 1,
+ADD CONSTRAINT fk_super_admins_role FOREIGN KEY (role_id) REFERENCES roles(id);
+
+ALTER TABLE admins
+ADD COLUMN role_id INT NOT NULL DEFAULT 2,
+ADD CONSTRAINT fk_admins_role FOREIGN KEY (role_id) REFERENCES roles(id);
