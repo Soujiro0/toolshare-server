@@ -118,7 +118,7 @@ CREATE TABLE damage_reports (
 
 CREATE TABLE activity_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_type ENUM('Super Admin', 'Admin') NOT NULL,
+    user_type ENUM('super_admin', 'admin') NOT NULL,
     user_id INT NOT NULL,
     action TEXT NOT NULL,
     action_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -161,3 +161,14 @@ ADD CONSTRAINT fk_super_admins_role FOREIGN KEY (role_id) REFERENCES roles(id);
 ALTER TABLE admins
 ADD COLUMN role_id INT NOT NULL DEFAULT 2,
 ADD CONSTRAINT fk_admins_role FOREIGN KEY (role_id) REFERENCES roles(id);
+
+ALTER TABLE activity_logs
+ADD COLUMN action_type VARCHAR(50) AFTER user_id;
+INSERT INTO activity_logs (user_type, user_id, action_type, action) VALUES
+('Super Admin', 1, 'Create', 'Created new admin account for John Doe.'),
+('Admin', 2, 'Approve', 'Approved borrow request for lab equipment.'),
+('Super Admin', 1, 'Update', 'Updated system configurations.'),
+('Admin', 3, 'Process', 'Processed return for item #145.'),
+('Admin', 2, 'Delete', 'Deleted outdated inventory record.');
+
+
