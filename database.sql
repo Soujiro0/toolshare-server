@@ -1,33 +1,50 @@
-CREATE DATABASE borrowing_system;
+-- =====================================
+-- 1. Create Database and Use It
+-- =====================================
+CREATE DATABASE IF NOT EXISTS borrowing_system;
 USE borrowing_system;
 
--- ================================
--- USERS TABLES
--- ================================
+-- =====================================
+-- 2. Lookup Tables (Static Data)
+-- =====================================
 
--- Super Admin Table
-CREATE TABLE super_admins (
+-- Roles: stores user roles (for admins and super admins)
+CREATE TABLE IF NOT EXISTS roles (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+-- Insert default roles (if not already inserted)
+INSERT IGNORE INTO roles (name) VALUES ('super_admin'), ('admin');
+
+-- Categories: for organizing items
+CREATE TABLE IF NOT EXISTS categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE
 );
 
--- Admin Table (For managing borrow & return transactions)
-CREATE TABLE admins (
+-- =====================================
+-- 3. Users (Admin & Super Admin Combined)
+-- =====================================
+-- Instead of separate tables for super_admins and admins, we combine them into one table.
+-- Admin Users Table (Combined for Admins and Super Admins)
+CREATE TABLE IF NOT EXISTS admin_users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,        -- Full name
     password VARCHAR(255) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
     status ENUM('Active', 'Inactive') DEFAULT 'Active',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    role_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (role_id) REFERENCES roles(id)
 );
 
--- Faculty (Instructors)
-CREATE TABLE faculty (
+-- =====================================
+-- 4. Faculty (Instructors)
+-- =====================================
+CREATE TABLE IF NOT EXISTS faculty (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    faculty_id VARCHAR(20) UNIQUE NOT NULL,
+    faculty_id VARCHAR(20) NOT NULL UNIQUE,
     name VARCHAR(100) NOT NULL,
     department VARCHAR(100) NOT NULL,
     contact_number VARCHAR(15),
@@ -35,39 +52,38 @@ CREATE TABLE faculty (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ================================
--- BORROW REQUEST (FORM-BASED)
--- ================================
--- Students fill out this form to request borrowing items;
--- must be signed by instructor and verified by admin.
-
-CREATE TABLE borrow_requests (
+-- =====================================
+-- 5. Borrow Requests
+-- =====================================
+-- Form-based borrow requests (submitted by students; signed by instructor and verified by admin)
+CREATE TABLE IF NOT EXISTS borrow_requests (
     id INT AUTO_INCREMENT PRIMARY KEY,
     student_name VARCHAR(100) NOT NULL,
-    course_year VARCHAR(50) NOT NULL, -- e.g. 'BSIT 2nd Year'
-    instructor_id INT NOT NULL,       -- Instructor in charge
+    course_year VARCHAR(50) NOT NULL,  -- e.g., 'BSIT 2nd Year'
+    instructor_id INT NOT NULL,        -- references faculty
     purpose TEXT NOT NULL,
-    signature_confirmed BOOLEAN DEFAULT FALSE, -- Instructor must approve
-    admin_verified BOOLEAN DEFAULT FALSE,      -- Admin must verify before lending
+    signature_confirmed BOOLEAN DEFAULT FALSE,
+    admin_verified BOOLEAN DEFAULT FALSE,
     request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (instructor_id) REFERENCES faculty(id) ON DELETE CASCADE
 );
 
--- ================================
--- ITEMS TABLE
--- ================================
-
-CREATE TABLE items (
+-- =====================================
+-- 6. Items & Inventory
+-- =====================================
+CREATE TABLE IF NOT EXISTS items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    category VARCHAR(100) NOT NULL,
+    category VARCHAR(100) NOT NULL,  -- Denormalized category name for quick access
     total_quantity INT NOT NULL CHECK (total_quantity >= 0),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    category_id INT,  -- Foreign key reference to categories table
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
 );
 
--- Condition of each item (per unit tracking, optional usage)
-CREATE TABLE item_conditions (
+-- For per-unit condition tracking (optional)
+CREATE TABLE IF NOT EXISTS item_conditions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     item_id INT NOT NULL,
     condition_status ENUM('New', 'Good', 'Fair', 'Damaged') NOT NULL DEFAULT 'Good',
@@ -75,100 +91,55 @@ CREATE TABLE item_conditions (
     FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
 );
 
--- ================================
--- TRANSACTION LOGS (BORROWING & RETURNING)
--- ================================
--- Links borrow_requests to actual item transactions.
-
-CREATE TABLE transactions (
+-- =====================================
+-- 7. Transactions & Damage Reports
+-- =====================================
+CREATE TABLE IF NOT EXISTS transactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    request_id INT NOT NULL,  -- Link to borrow_requests
-    item_id INT NOT NULL,     -- Which item is borrowed
+    request_id INT NOT NULL,  -- link to borrow_requests
+    item_id INT NOT NULL,     -- which item is borrowed
     quantity INT NOT NULL CHECK (quantity > 0),
     borrowed_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     due_date DATE NOT NULL,
     returned_date TIMESTAMP NULL,
-    status ENUM('Pending','Borrowed','Returned','Overdue','Damaged') DEFAULT 'Pending',
-    verified_by INT,          -- Admin who approved the borrowing
-    received_by INT,          -- Admin who processed the return
-    damage_report TEXT NULL,  -- If damaged, store notes
+    status ENUM('Pending', 'Borrowed', 'Returned', 'Overdue', 'Damaged') DEFAULT 'Pending',
+    verified_by INT,  -- admin who approved
+    received_by INT,  -- admin who processed return
+    damage_report TEXT,  -- if item is damaged
     FOREIGN KEY (request_id) REFERENCES borrow_requests(id) ON DELETE CASCADE,
     FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
-    FOREIGN KEY (verified_by) REFERENCES admins(id) ON DELETE SET NULL,
-    FOREIGN KEY (received_by) REFERENCES admins(id) ON DELETE SET NULL
+    FOREIGN KEY (verified_by) REFERENCES admin_users(id) ON DELETE SET NULL,
+    FOREIGN KEY (received_by) REFERENCES admin_users(id) ON DELETE SET NULL
 );
 
--- ================================
--- DAMAGE REPORTS (IF ITEM IS DAMAGED)
--- ================================
-
-CREATE TABLE damage_reports (
+CREATE TABLE IF NOT EXISTS damage_reports (
     id INT AUTO_INCREMENT PRIMARY KEY,
     transaction_id INT NOT NULL,
-    reported_by INT NOT NULL,  -- Admin who reported
+    reported_by INT NOT NULL,  -- admin who reported damage
     report_details TEXT NOT NULL,
     reported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE,
-    FOREIGN KEY (reported_by) REFERENCES admins(id) ON DELETE CASCADE
+    FOREIGN KEY (reported_by) REFERENCES admin_users(id) ON DELETE CASCADE
 );
 
--- ================================
--- ACTIVITY LOGS (Super Admin/Admin Actions)
--- ================================
-
-CREATE TABLE activity_logs (
+-- =====================================
+-- 8. Activity Logs
+-- =====================================
+-- Logs admin actions; we reference the admin_users table for normalization.
+CREATE TABLE IF NOT EXISTS activity_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_type ENUM('super_admin', 'admin') NOT NULL,
-    user_id INT NOT NULL,
+    user_id INT NOT NULL,           -- Admin user id performing the action
+    user_name VARCHAR(100) NOT NULL, -- Denormalized user name
+    role VARCHAR(50) NOT NULL,       -- Denormalized role of the user (e.g., 'super_admin' or 'admin')
+    action_type VARCHAR(50) NOT NULL, -- e.g., Create, Update, Delete, etc.
     action TEXT NOT NULL,
-    action_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    action_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES admin_users(id)
 );
 
--- ================================
--- ADDITIONAL TABLES
--- ================================
-
--- Categories (For better organization of items)
-CREATE TABLE categories (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) UNIQUE NOT NULL
-);
-
--- Roles (For Users, especially admins and super admins)
-CREATE TABLE roles (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE
-);
-INSERT INTO roles (name) VALUES ('super_admin'), ('admin');
-
--- Map Items to Categories
-ALTER TABLE items ADD COLUMN category_id INT;
-ALTER TABLE items ADD FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL;
-
--- ================================
--- INDEXES & PERFORMANCE OPTIMIZATION
--- ================================
-
+-- =====================================
+-- 9. Indexes & Performance Optimizations
+-- =====================================
 CREATE INDEX idx_request_status ON borrow_requests(signature_confirmed, admin_verified);
 CREATE INDEX idx_transaction_status ON transactions(status);
 CREATE INDEX idx_activity_user ON activity_logs(user_id);
-
--- Map Users to Roles
-ALTER TABLE super_admins
-ADD COLUMN role_id INT NOT NULL DEFAULT 1,
-ADD CONSTRAINT fk_super_admins_role FOREIGN KEY (role_id) REFERENCES roles(id);
-
-ALTER TABLE admins
-ADD COLUMN role_id INT NOT NULL DEFAULT 2,
-ADD CONSTRAINT fk_admins_role FOREIGN KEY (role_id) REFERENCES roles(id);
-
-ALTER TABLE activity_logs
-ADD COLUMN action_type VARCHAR(50) AFTER user_id;
-INSERT INTO activity_logs (user_type, user_id, action_type, action) VALUES
-('Super Admin', 1, 'Create', 'Created new admin account for John Doe.'),
-('Admin', 2, 'Approve', 'Approved borrow request for lab equipment.'),
-('Super Admin', 1, 'Update', 'Updated system configurations.'),
-('Admin', 3, 'Process', 'Processed return for item #145.'),
-('Admin', 2, 'Delete', 'Deleted outdated inventory record.');
-
-

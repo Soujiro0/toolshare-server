@@ -12,13 +12,14 @@ class Auth
     private static $secret_key = JWT_SECRET_KEY;
     private static $algorithm = 'HS256';
 
-    public static function generateToken($user_id, $role)
+    public static function generateToken($user_id, $name, $role)
     {
         $issuedAt = time();
         $expire = $issuedAt + 3600; // 1 hour expiration
 
         $payload = [
             'user_id' => $user_id,
+            'name' => $name,
             'role' => $role,
             'iat' => $issuedAt,
             'exp' => $expire

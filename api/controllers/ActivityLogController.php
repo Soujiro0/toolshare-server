@@ -8,14 +8,14 @@ class ActivityLogController {
      * Create a new activity log entry.
      */
     public function createLog($data) {
-        if (!isset($data->user_type, $data->user_id, $data->action_type, $data->action)) {
+        if (!isset($data->user_id, $data->user_name, $data->role, $data->action_type, $data->action)) {
             http_response_code(400);
-            echo json_encode(["message" => "user_type, user_id, and action are required"]);
+            echo json_encode(["message" => "user_id, and action are required"]);
             return;
         }
         $activityLog = new ActivityLog();
         try {
-            $id = $activityLog->create($data->user_type, $data->user_id, $data->action_type, $data->action);
+            $id = $activityLog->create($data->user_id, $data->user_name, $data->role, $data->action_type, $data->action);
             echo json_encode(["message" => "Activity log created", "id" => $id]);
         } catch (Exception $e) {
             http_response_code(500);

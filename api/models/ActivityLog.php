@@ -7,11 +7,12 @@ class ActivityLog {
     /**
      * Create a new activity log entry.
      */
-    public function create($user_type, $user_id, $action_type, $action) {
+    public function create($user_id, $user_name, $role, $action_type, $action) {
         $db = Database::getInstance();
-        $stmt = $db->prepare("INSERT INTO activity_logs (user_type, user_id, action_type, action) VALUES (:user_type, :user_id, :action_type, :action)");
-        $stmt->bindParam(":user_type", $user_type);
+        $stmt = $db->prepare("INSERT INTO activity_logs (user_id, user_name, role, action_type, action) VALUES (:user_id, :user_name, :role, :action_type, :action)");
         $stmt->bindParam(":user_id", $user_id, PDO::PARAM_INT);
+        $stmt->bindParam(":user_name", $user_name);
+        $stmt->bindParam(":role", $role);
         $stmt->bindParam(":action_type", $action_type);
         $stmt->bindParam(":action", $action);
         $stmt->execute();
