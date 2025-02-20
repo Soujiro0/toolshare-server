@@ -12,17 +12,21 @@ class ItemController
         $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
         $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
         $offset = ($page - 1) * $limit;
+        $category = isset($_GET['category']) ? $_GET['category'] : null;
+        $sortBy = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'id';
+        $order = isset($_GET['order']) && strtolower($_GET['order']) === 'desc' ? 'DESC' : 'ASC';
+        $search = isset($_GET['search']) ? $_GET['search'] : null;
 
         try {
             $item = new Item();
-            $items = $item->getAll($limit, $offset);
-            $totalItems = $item->getTotalCount();
+            $items = $item->getAll($limit, $offset, $category, $sortBy, $order, $search);
+            $totalItems = $item->getTotalCount($category, $search);
 
             echo json_encode([
                 "items" => $items,
                 "totalItems" => $totalItems,
             ]);
-        } catch (Exception $e) {
+        } catch (Exception $e) {    
             http_response_code(500);
             echo json_encode([
                 "message" => "Error fetching items",

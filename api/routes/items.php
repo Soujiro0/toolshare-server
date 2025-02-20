@@ -10,7 +10,7 @@ $controller = new ItemController();
 
 switch ($method) {
     case 'GET':
-        requireAuth();
+        // requireAuth();
         $controller->listItems();
         break;
     case 'POST':

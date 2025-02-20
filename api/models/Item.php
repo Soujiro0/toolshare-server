@@ -23,21 +23,50 @@ class Item
         return $stmt->execute();
     }
 
-    public function getAll($limit = 10, $offset = 0)
+    public function getAll($limit = 10, $offset = 0, $category = null, $sortBy = 'id', $order = 'ASC', $search = null)
     {
         $db = Database::getInstance();
-        $sql = "SELECT * FROM items LIMIT :limit OFFSET :offset";
+        $sql = "SELECT * FROM items WHERE 1=1";
+        if ($category) {
+            $sql .= " AND category = :category";
+        }
+        if ($search) {
+            $sql .= " AND name LIKE :search";
+        }
+        $sql .= " ORDER BY $sortBy $order LIMIT :limit OFFSET :offset";
         $stmt = $db->prepare($sql);
+        if ($category) {
+            $stmt->bindParam(':category', $category);
+        }
+        if ($search) {
+            $searchTerm = '%' . $search . '%';
+            $stmt->bindParam(':search', $searchTerm);
+        }
         $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getTotalCount()
+    public function getTotalCount($category = null, $search = null)
     {
         $db = Database::getInstance();
-        $stmt = $db->query("SELECT COUNT(*) AS total FROM items");
+        $sql = "SELECT COUNT(*) AS total FROM items WHERE 1=1";
+        if ($category) {
+            $sql .= " AND category = :category";
+        }
+        if ($search) {
+            $sql .= " AND name LIKE :search";
+        }
+        $stmt = $db->prepare($sql);
+        if ($category) {
+            $stmt->bindParam(':category', $category);
+        }
+        if ($search) {
+            $searchTerm = '%' . $search . '%';
+            $stmt->bindParam(':search', $searchTerm);
+        }
+        $stmt->execute();
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result['total'];
     }
