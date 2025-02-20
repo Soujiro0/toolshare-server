@@ -1,29 +1,7 @@
 <?php
-// api/controllers/ActivityLogController.php
-
 require_once __DIR__ . '/../models/ActivityLog.php';
-
 class ActivityLogController {
-    /**
-     * Create a new activity log entry.
-     */
-    public function createLog($data) {
-        if (!isset($data->user_id, $data->user_name, $data->role, $data->action_type, $data->action)) {
-            http_response_code(400);
-            echo json_encode(["message" => "user_id, and action are required"]);
-            return;
-        }
-        $activityLog = new ActivityLog();
-        try {
-            $id = $activityLog->create($data->user_id, $data->user_name, $data->role, $data->action_type, $data->action);
-            echo json_encode(["message" => "Activity log created", "id" => $id]);
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(["message" => "Error creating log", "error" => $e->getMessage()]);
-        }
-    }
-
-    /**
+        /**
      * List all activity logs.
      */
     public function listLogs() {
@@ -31,11 +9,16 @@ class ActivityLogController {
         $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
         $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
         $offset = ($page - 1) * $limit;
+        $user_type = isset($_GET['user_type']) ? $_GET['user_type'] : null;
+        $action_type = isset($_GET['action_type']) ? $_GET['action_type'] : null;
+        $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : null;
+        $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : null;
+        $search_query = isset($_GET['search_query']) ? $_GET['search_query'] : null;
 
         try {
             $activityLog = new ActivityLog();
-            $logs = $activityLog->getAll($limit, $offset);
-            $totalLogs = $activityLog->getTotalCount();
+            $logs = $activityLog->getAll($limit, $offset, $user_type, $action_type, $start_date, $end_date, $search_query);
+            $totalLogs = $activityLog->getTotalCount($user_type, $action_type, $start_date, $end_date, $search_query);
 
             // Return paginated logs and total count in JSON
             echo json_encode([
@@ -67,6 +50,25 @@ class ActivityLogController {
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(["message" => "Error fetching log", "error" => $e->getMessage()]);
+        }
+    }
+    
+    /**
+     * Create a new activity log entry.
+     */
+    public function createLog($data) {
+        if (!isset($data->user_id, $data->user_name, $data->role, $data->action_type, $data->action)) {
+            http_response_code(400);
+            echo json_encode(["message" => "user_id, and action are required"]);
+            return;
+        }
+        $activityLog = new ActivityLog();
+        try {
+            $id = $activityLog->create($data->user_id, $data->user_name, $data->role, $data->action_type, $data->action);
+            echo json_encode(["message" => "Activity log created", "id" => $id]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(["message" => "Error creating log", "error" => $e->getMessage()]);
         }
     }
 

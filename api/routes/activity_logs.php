@@ -1,5 +1,4 @@
 <?php
-// api/routes/activity_logs.php
 header("Content-Type: application/json");
 require_once __DIR__ . '/../cors.php';
 require_once __DIR__ . '/../controllers/ActivityLogController.php';

@@ -1,34 +1,9 @@
 <?php
-// api/controllers/CategoryController.php
 require_once __DIR__ . '/../models/Category.php';
-
-class CategoryController {
-    public function createCategory($data) {
-        if (!isset($data->name)) {
-            http_response_code(400);
-            echo json_encode(["message" => "Category name is required"]);
-            return;
-        }
-        $category = new Category();
-        
-        // Check for duplication
-        $existing = $category->getByName($data->name);
-        if ($existing) {
-            http_response_code(409); // Conflict
-            echo json_encode(["message" => "Category already exists"]);
-            return;
-        }
-        
-        try {
-            $id = $category->create($data->name);
-            echo json_encode(["message" => "Category created successfully", "id" => $id]);
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(["message" => "Error creating category", "error" => $e->getMessage()]);
-        }
-    }
-
-    public function listCategories() {
+class CategoryController
+{
+    public function listCategories()
+    {
         $category = new Category();
         try {
             $categories = $category->getAll();
@@ -39,7 +14,8 @@ class CategoryController {
         }
     }
 
-    public function getCategory($id) {
+    public function getCategory($id)
+    {
         $category = new Category();
         try {
             $result = $category->getById($id);
@@ -55,7 +31,34 @@ class CategoryController {
         }
     }
 
-    public function updateCategory($id, $data) {
+    public function createCategory($data)
+    {
+        if (!isset($data->name)) {
+            http_response_code(400);
+            echo json_encode(["message" => "Category name is required"]);
+            return;
+        }
+        $category = new Category();
+
+        // Check for duplication
+        $existing = $category->getByName($data->name);
+        if ($existing) {
+            http_response_code(409); // Conflict
+            echo json_encode(["message" => "Category already exists"]);
+            return;
+        }
+
+        try {
+            $id = $category->create($data->name);
+            echo json_encode(["message" => "Category created successfully", "id" => $id]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(["message" => "Error creating category", "error" => $e->getMessage()]);
+        }
+    }
+
+    public function updateCategory($id, $data)
+    {
         if (!isset($data->name)) {
             http_response_code(400);
             echo json_encode(["message" => "Category name is required"]);
@@ -71,7 +74,8 @@ class CategoryController {
         }
     }
 
-    public function deleteCategory($id) {
+    public function deleteCategory($id)
+    {
         $category = new Category();
         try {
             $category->delete($id);
@@ -82,4 +86,3 @@ class CategoryController {
         }
     }
 }
-?>

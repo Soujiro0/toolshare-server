@@ -1,9 +1,6 @@
 <?php
-// api/controllers/AuthController.php
-
 require_once __DIR__ . '/../models/Database.php';
 require_once __DIR__ . '/../auth/auth.php';
-
 class AuthController
 {
     private $db;
@@ -15,8 +12,10 @@ class AuthController
 
     public function login($username, $password)
     {
-        // Query from the unified admin_users table joined with roles to get the role name,
-        // and include the name field from admin_users.
+        /**
+         *  Query from the unified admin_users table joined with roles to get the role name,
+         *  and include the name field from admin_users.
+         */
         $sql = "SELECT au.id, au.name, au.password, r.name AS role 
                 FROM admin_users au
                 JOIN roles r ON au.role_id = r.id
