@@ -1,6 +1,4 @@
 <?php
-// api/cors.php
-
 // Allow any origin - adjust this in production for tighter security
 header("Access-Control-Allow-Origin: *");
 

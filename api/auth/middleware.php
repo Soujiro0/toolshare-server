@@ -4,9 +4,13 @@
 require_once 'auth.php';
 
 /**
+ * Middleware function to enforce authentication and role-based access control.
+ *
  * @param string|array|null $requiredRoles A string for a single role (e.g. 'admin'),
- *                                         or an array of roles (e.g. ['admin', 'super_admin']),
- *                                         or null for any authenticated user.
+ *                                         an array of roles (e.g. ['admin', 'super_admin']),
+ *                                         or null to allow any authenticated user.
+ *
+ * @return object|null Returns the decoded JWT payload if authentication is successful, or exits with an error response.
  */
 function requireAuth($requiredRoles = null)
 {
