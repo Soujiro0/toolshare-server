@@ -1,7 +1,7 @@
 <?php
 // Database configuration
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'db_borrowing_system');
+define('DB_NAME', 'db_tool_share_borrowing_system');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 

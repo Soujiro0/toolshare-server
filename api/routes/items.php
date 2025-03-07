@@ -8,42 +8,53 @@ require_once __DIR__ . '/../auth/middleware.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $controller = new ItemController();
 
+$requestUri = strtok($_SERVER['REQUEST_URI'], '?'); 
+$segments = explode('/', trim($requestUri, '/')); 
+$itemId = isset($segments[4]) ? intval($segments[4]) : null;
+
 switch ($method) {
     case 'GET':
-        // requireAuth();
-        if (isset($_GET['item_id'])) {
-            $id = intval($_GET['item_id']);
-            $controller->getItemById($id);
-        } else {
-            $controller->listItems();
+        if ($itemId) { 
+            $item = $controller->getItemById($itemId);
+        } else { 
+            $items = $controller->getAllItems();
         }
         break;
+
     case 'POST':
-        // requireAuth(['admin', 'super_admin']);
         $data = json_decode(file_get_contents("php://input"));
+        if (!$data) {
+            http_response_code(400);
+            echo json_encode(["message" => "Invalid JSON payload"]);
+            exit;
+        }
         $controller->createItem($data);
         break;
-    case 'PATCH':
-        // requireAuth(['admin', 'super_admin']);
-        if (isset($_GET['item_id'])) {
-            $id = intval($_GET['item_id']);
+
+    case 'PUT':
+        if ($itemId) {
             $data = json_decode(file_get_contents("php://input"));
-            $controller->updateItem($id, $data);
+            if (!$data) {
+                http_response_code(400);
+                echo json_encode(["message" => "Invalid JSON payload"]);
+                exit;
+            }
+            $controller->updateItem($itemId, $data);
         } else {
             http_response_code(400);
-            echo json_encode(["message" => "Missing item id"]);
+            echo json_encode(["message" => "Missing item ID"]);
         }
         break;
+
     case 'DELETE':
-        // requireAuth(['admin', 'super_admin']);
-        if (isset($_GET['item_id'])) {
-            $id = intval($_GET['item_id']);
-            $controller->deleteItem($id);
+        if ($itemId) {
+            $controller->deleteItem($itemId);
         } else {
             http_response_code(400);
-            echo json_encode(["message" => "Missing item id"]);
+            echo json_encode(["message" => "Missing item ID"]);
         }
         break;
+
     default:
         http_response_code(405);
         echo json_encode(["message" => "Method not allowed"]);

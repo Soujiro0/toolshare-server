@@ -1,19 +1,11 @@
 <?php
 require_once __DIR__ . '/../models/Category.php';
 
-/**
- * Class CategoryController
- * 
- * Handles API requests for category management.
- */
+
 class CategoryController
 {
-    /**
-     * Retrieves all categories.
-     * 
-     * @return void Outputs JSON response containing the list of categories.
-     */
-    public function listCategories()
+
+    public function getAllCategory()
     {
         $category = new Category();
         try {
@@ -28,13 +20,7 @@ class CategoryController
         }
     }
 
-    /**
-     * Retrieves a specific category by its ID.
-     * 
-     * @param int $id The category ID.
-     * @return void Outputs JSON response with category data or an error message.
-     */
-    public function getCategory($id)
+    public function getCategoryById($id)
     {
         $category = new Category();
         try {
@@ -54,12 +40,6 @@ class CategoryController
         }
     }
 
-    /**
-     * Creates a new category.
-     * 
-     * @param object $data JSON-decoded request body containing category_name.
-     * @return void Outputs JSON response with success or error message.
-     */
     public function createCategory($data)
     {
         if (!isset($data->category_name) || empty(trim($data->category_name))) {
@@ -90,13 +70,6 @@ class CategoryController
         }
     }
 
-    /**
-     * Updates an existing category by ID.
-     * 
-     * @param int $id The category ID.
-     * @param object $data JSON-decoded request body containing category_name.
-     * @return void Outputs JSON response with success or error message.
-     */
     public function updateCategory($id, $data)
     {
         if (!isset($data->category_name) || empty(trim($data->category_name))) {

@@ -1,11 +1,6 @@
 <?php
 require_once 'Database.php';
 
-/**
- * Class Category
- * 
- * Handles CRUD operations for item categories.
- */
 class Category
 {
 
@@ -16,12 +11,6 @@ class Category
         $this->db = Database::getInstance();
     }
 
-    /**
-     * Creates a new category.
-     * 
-     * @param string $name The name of the category.
-     * @return int|false Returns the last inserted category ID on success, false on failure.
-     */
     public function create($name)
     {
         try {
@@ -34,11 +23,6 @@ class Category
         }
     }
 
-    /**
-     * Retrieves all categories.
-     * 
-     * @return array Returns an array of all categories.
-     */
     public function getAll()
     {
         try {
@@ -49,12 +33,6 @@ class Category
         }
     }
 
-    /**
-     * Retrieves a category by its ID.
-     * 
-     * @param int $id The category ID.
-     * @return array|null Returns an associative array of the category data, or null if not found.
-     */
     public function getById($id)
     {
         try {
@@ -67,12 +45,6 @@ class Category
         }
     }
 
-    /**
-     * Retrieves a category by its name.
-     * 
-     * @param string $name The category name.
-     * @return array|null Returns an associative array of the category data, or null if not found.
-     */
     public function getByName($name)
     {
         try {
@@ -85,13 +57,6 @@ class Category
         }
     }
 
-    /**
-     * Updates a category by its ID.
-     * 
-     * @param int $id The category ID.
-     * @param string $name The new category name.
-     * @return bool Returns true if the update was successful, false otherwise.
-     */
     public function update($id, $name)
     {
         try {
@@ -104,12 +69,6 @@ class Category
         }
     }
 
-    /**
-     * Deletes a category by its ID.
-     * 
-     * @param int $id The category ID.
-     * @return bool Returns true if deletion was successful, false otherwise.
-     */
     public function delete($id)
     {
         try {
