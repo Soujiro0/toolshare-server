@@ -10,11 +10,13 @@ class UserController
         $this->userModel = new User();
     }
 
-    // Get all users
+    // Get all users with optional role_id filter
     public function getUsers()
     {
-        echo json_encode($this->userModel->getAllUsers());
+        $role_id = isset($_GET['role_id']) ? intval($_GET['role_id']) : null;
+        echo json_encode($this->userModel->getAllUsers($role_id));
     }
+
 
     // Get user by ID
     public function getUser($user_id)

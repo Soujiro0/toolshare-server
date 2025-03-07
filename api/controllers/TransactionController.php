@@ -17,9 +17,8 @@ class TransactionController
         $offset = ($page - 1) * $limit;
     
         $request_id = isset($_GET['request_id']) ? intval($_GET['request_id']) : null;
-        $status = isset($_GET['status']) ? $_GET['status'] : null;
+        $transaction_status = isset($_GET['transaction_status']) ? $_GET['transaction_status'] : null;
         $admin_verified = isset($_GET['admin_verified']) ? filter_var($_GET['admin_verified'], FILTER_VALIDATE_BOOLEAN) : null;
-        $admin_id = isset($_GET['admin_id']) ? intval($_GET['admin_id']) : null;
     
         $sortBy = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'transaction_id';
         $order = isset($_GET['order']) && strtolower($_GET['order']) === 'desc' ? 'DESC' : 'ASC';
@@ -30,9 +29,8 @@ class TransactionController
                 $limit,
                 $offset,
                 $request_id,
-                $status,
+                $transaction_status,
                 $admin_verified,
-                $admin_id,
                 $sortBy,
                 $order,
                 $search
@@ -40,9 +38,8 @@ class TransactionController
     
             $totalTransactions = $this->model->getTotalTransactionCount(
                 $request_id,
-                $status,
+                $transaction_status,
                 $admin_verified,
-                $admin_id,
                 $search
             );
     
@@ -79,7 +76,7 @@ class TransactionController
     public function createTransaction($data)
     {
         try {
-            if (!isset($data->request_id, $data->admin_user_id)) {
+            if (!isset($data->request_id)) {
                 http_response_code(400);
                 echo json_encode(["message" => "Missing required fields"]);
                 return;

@@ -10,13 +10,24 @@ class User
         $this->db = Database::getInstance();
     }
 
-    // Fetch all users
-    public function getAllUsers()
+    // Fetch all users with optional role filter
+    public function getAllUsers($role_id = null)
     {
         $sql = "SELECT u.user_id, u.username, u.name, u.email, r.role_name, u.user_type, u.date_created 
-                FROM tbl_users u
-                INNER JOIN tbl_roles r ON u.role_id = r.role_id";
-        $stmt = $this->db->query($sql);
+            FROM tbl_users u
+            INNER JOIN tbl_roles r ON u.role_id = r.role_id";
+
+        if ($role_id !== null) {
+            $sql .= " WHERE u.role_id = :role_id";
+        }
+
+        $stmt = $this->db->prepare($sql);
+
+        if ($role_id !== null) {
+            $stmt->bindParam(':role_id', $role_id, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

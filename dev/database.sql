@@ -60,13 +60,11 @@ CREATE TABLE tbl_borrow_requests (
     borrower_name VARCHAR(100) NOT NULL,
     faculty_user_id BIGINT UNSIGNED NULL,
     faculty_verified BOOLEAN NOT NULL DEFAULT FALSE,
-    item_borrowed BIGINT UNSIGNED NOT NULL,
-    quantity_borrowed INT UNSIGNED NOT NULL,
+    item_borrowed JSON NOT NULL,
     purpose TEXT NULL,
     request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     request_status ENUM('PENDING_FACULTY_APPROVAL', 'REJECTED_BY_FACULTY', 'APPROVED', 'CANCELLED') NOT NULL DEFAULT 'PENDING_FACULTY_APPROVAL',
-    FOREIGN KEY (faculty_user_id) REFERENCES tbl_users(user_id) ON DELETE SET NULL,
-    FOREIGN KEY (item_borrowed) REFERENCES tbl_items(item_id) ON DELETE CASCADE
+    FOREIGN KEY (faculty_user_id) REFERENCES tbl_users(user_id) ON DELETE SET NULL
 );
 
 -- ====================================
@@ -77,10 +75,8 @@ CREATE TABLE tbl_transactions (
     request_id BIGINT UNSIGNED NOT NULL,
     transaction_status ENUM('PENDING_ADMIN_APPROVAL', 'REJECTED_BY_ADMIN', 'BORROWED', 'RETURNED') NOT NULL DEFAULT 'PENDING_ADMIN_APPROVAL',
     admin_verified BOOLEAN NOT NULL DEFAULT FALSE,
-    admin_user_id BIGINT UNSIGNED NULL,
     transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (request_id) REFERENCES tbl_borrow_requests(request_id) ON DELETE CASCADE,
-    FOREIGN KEY (admin_user_id) REFERENCES tbl_users(user_id) ON DELETE SET NULL
+    FOREIGN KEY (request_id) REFERENCES tbl_borrow_requests(request_id) ON DELETE CASCADE
 );
 
 -- ====================================

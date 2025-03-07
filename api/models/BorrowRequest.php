@@ -29,12 +29,12 @@ class BorrowRequest
      * @return array List of borrow requests
      */
     public function getAllRequests(
-        $limit = 10,
+        $limit = 100,
         $offset = 0,
         $borrower_name = null,
         $user_id = null,
         $faculty_verified = null,
-        $item_borrowed = null,
+        $items_borrowed = null,
         $purpose = null,
         $request_date = null,
         $request_status = null,
@@ -54,8 +54,8 @@ class BorrowRequest
             if ($faculty_verified !== null) {
                 $sql .= " AND faculty_verified = :faculty_verified";
             }
-            if ($item_borrowed !== null) {
-                $sql .= " AND item_borrowed LIKE :item_borrowed";
+            if ($items_borrowed !== null) {
+                $sql .= " AND items_borrowed LIKE :items_borrowed";
             }
             if ($purpose !== null) {
                 $sql .= " AND purpose LIKE :purpose";
@@ -76,8 +76,7 @@ class BorrowRequest
                 'borrower_name',
                 'user_id',
                 'faculty_verified',
-                'item_borrowed',
-                'quantity_borrowed',
+                'items_borrowed',
                 'purpose',
                 'request_date',
                 'request_status'
@@ -100,9 +99,9 @@ class BorrowRequest
                 $verifiedValue = $faculty_verified ? 1 : 0;
                 $stmt->bindParam(':faculty_verified', $verifiedValue, PDO::PARAM_INT);
             }
-            if ($item_borrowed !== null) {
-                $itemTerm = "%$item_borrowed%";
-                $stmt->bindParam(':item_borrowed', $itemTerm, PDO::PARAM_STR);
+            if ($items_borrowed !== null) {
+                $itemTerm = "%$items_borrowed%";
+                $stmt->bindParam(':items_borrowed', $itemTerm, PDO::PARAM_STR);
             }
             if ($purpose !== null) {
                 $purposeTerm = "%$purpose%";
@@ -136,7 +135,7 @@ class BorrowRequest
      * @param string|null $borrower_name Filter by borrower name
      * @param int|null $faculty_user_id Filter by faculty ID
      * @param bool|null $faculty_verified Filter by faculty verification status
-     * @param string|null $item_borrowed Filter by item borrowed
+     * @param string|null $items_borrowed Filter by item borrowed
      * @param string|null $purpose Filter by purpose
      * @param string|null $request_date Filter by request date (YYYY-MM-DD)
      * @param string|null $status Filter by status
@@ -147,7 +146,7 @@ class BorrowRequest
         $borrower_name = null,
         $faculty_user_id = null,
         $faculty_verified = null,
-        $item_borrowed = null,
+        $items_borrowed = null,
         $purpose = null,
         $request_date = null,
         $request_status = null,
@@ -165,8 +164,8 @@ class BorrowRequest
             if ($faculty_verified !== null) {
                 $sql .= " AND faculty_verified = :faculty_verified";
             }
-            if ($item_borrowed !== null) {
-                $sql .= " AND item_borrowed LIKE :item_borrowed";
+            if ($items_borrowed !== null) {
+                $sql .= " AND items_borrowed LIKE :items_borrowed";
             }
             if ($purpose !== null) {
                 $sql .= " AND purpose LIKE :purpose";
@@ -175,7 +174,7 @@ class BorrowRequest
                 $sql .= " AND DATE(request_date) = :request_date";
             }
             if ($request_status !== null) {
-                $sql .= " AND status = :status";
+                $sql .= " AND request_status = :request_status";
             }
             if ($search !== null) {
                 $sql .= " AND (borrower_name LIKE :search OR item_borrowed LIKE :search OR purpose LIKE :search)";
@@ -194,9 +193,9 @@ class BorrowRequest
                 $verifiedValue = $faculty_verified ? 1 : 0;
                 $stmt->bindParam(':faculty_verified', $verifiedValue, PDO::PARAM_INT);
             }
-            if ($item_borrowed !== null) {
-                $itemTerm = "%$item_borrowed%";
-                $stmt->bindParam(':item_borrowed', $itemTerm, PDO::PARAM_STR);
+            if ($items_borrowed !== null) {
+                $itemTerm = "%$items_borrowed%";
+                $stmt->bindParam(':items_borrowed', $itemTerm, PDO::PARAM_STR);
             }
             if ($purpose !== null) {
                 $purposeTerm = "%$purpose%";
@@ -206,7 +205,7 @@ class BorrowRequest
                 $stmt->bindParam(':request_date', $request_date, PDO::PARAM_STR);
             }
             if ($request_status !== null) {
-                $stmt->bindParam(':status', $request_status, PDO::PARAM_STR);
+                $stmt->bindParam(':request_status', $request_status, PDO::PARAM_STR);
             }
             if ($search !== null) {
                 $searchTerm = "%$search%";
@@ -232,14 +231,13 @@ class BorrowRequest
 
     public function createRequest($data)
     {
-        $sql = "INSERT INTO tbl_borrow_requests (borrower_name, faculty_user_id, item_borrowed, quantity_borrowed, purpose, request_date) 
-                VALUES (:borrower_name, :faculty_user_id, :item_borrowed, :quantity_borrowed, :purpose, NOW())";
+        $sql = "INSERT INTO tbl_borrow_requests (borrower_name, faculty_user_id, items_borrowed, purpose, request_date) 
+                VALUES (:borrower_name, :faculty_user_id, :items_borrowed, :purpose, NOW())";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
             ':borrower_name' => $data->borrower_name,
             ':faculty_user_id' => $data->faculty_user_id,
-            ':item_borrowed' => $data->item_borrowed,
-            ':quantity_borrowed' => $data->quantity_borrowed,
+            ':items_borrowed' => $data->items_borrowed,
             ':purpose' => $data->purpose
         ]);
     }

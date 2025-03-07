@@ -41,14 +41,14 @@ class BorrowRequestController
      */
     public function listRequests()
     {
-        $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
+        $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 100;
         $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
         $offset = ($page - 1) * $limit;
 
         $borrower_name = isset($_GET['borrower_name']) ? $_GET['borrower_name'] : null;
         $faculty_id = isset($_GET['faculty_id']) ? intval($_GET['faculty_id']) : null;
         $faculty_verified = isset($_GET['faculty_verified']) ? filter_var($_GET['faculty_verified'], FILTER_VALIDATE_BOOLEAN) : null;
-        $item_borrowed = isset($_GET['item_borrowed']) ? $_GET['item_borrowed'] : null;
+        $items_borrowed = isset($_GET['items_borrowed']) ? $_GET['items_borrowed'] : null;
         $purpose = isset($_GET['purpose']) ? $_GET['purpose'] : null;
         $request_date = isset($_GET['request_date']) ? $_GET['request_date'] : null;
         $request_status = isset($_GET['request_status']) ? $_GET['request_status'] : null;
@@ -64,7 +64,7 @@ class BorrowRequestController
                 $borrower_name,
                 $faculty_id,
                 $faculty_verified,
-                $item_borrowed,
+                $items_borrowed,
                 $purpose,
                 $request_date,
                 $request_status,
@@ -77,7 +77,7 @@ class BorrowRequestController
                 $borrower_name,
                 $faculty_id,
                 $faculty_verified,
-                $item_borrowed,
+                $items_borrowed,
                 $purpose,
                 $request_date,
                 $request_status,
@@ -143,7 +143,7 @@ class BorrowRequestController
     {
         try {
             // Validate required fields
-            if (!isset($data->borrower_name, $data->faculty_user_id, $data->item_borrowed, $data->quantity_borrowed, $data->purpose)) {
+            if (!isset($data->borrower_name, $data->faculty_user_id, $data->items_borrowed, $data->purpose)) {
                 http_response_code(400);
                 echo json_encode(["message" => "Missing required fields"]);
                 return;

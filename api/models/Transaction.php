@@ -31,14 +31,13 @@ class Transaction
         $request_id = null,
         $transaction_status = null,
         $admin_verified = null,
-        $admin_user_id = null,
         $sortBy = 'transaction_id',
         $order = 'ASC',
         $search = null
     ) {
         try {
             $sql = "SELECT t.*, br.borrower_name, br.faculty_user_id, br.faculty_verified, 
-                        br.item_borrowed, br.quantity_borrowed, br.purpose, br.request_date, br.request_status
+                        br.items_borrowed, br.purpose, br.request_date, br.request_status
                 FROM tbl_transactions t
                 JOIN tbl_borrow_requests br ON t.request_id = br.request_id
                 WHERE 1=1";
@@ -52,11 +51,8 @@ class Transaction
             if ($admin_verified !== null) {
                 $sql .= " AND t.admin_verified = :admin_verified";
             }
-            if ($admin_user_id !== null) {
-                $sql .= " AND t.admin_user_id = :admin_user_id";
-            }
             if ($search !== null) {
-                $sql .= " AND (br.borrower_name LIKE :search OR br.item_borrowed LIKE :search OR br.purpose LIKE :search)";
+                $sql .= " AND (br.borrower_name LIKE :search OR br.items_borrowed LIKE :search OR br.purpose LIKE :search)";
             }
 
             // Validate sort column to prevent SQL injection
@@ -85,9 +81,6 @@ class Transaction
                 $adminVerifiedValue = $admin_verified ? 1 : 0;
                 $stmt->bindParam(':admin_verified', $adminVerifiedValue, PDO::PARAM_INT);
             }
-            if ($admin_user_id !== null) {
-                $stmt->bindParam(':admin_user_id', $admin_user_id, PDO::PARAM_INT);
-            }
             if ($search !== null) {
                 $searchTerm = "%$search%";
                 $stmt->bindParam(':search', $searchTerm, PDO::PARAM_STR);
@@ -110,17 +103,15 @@ class Transaction
      *
      * @param int|null $transaction_id Filter by transaction ID
      * @param int|null $request_id Filter by request ID
-     * @param string|null $status Filter by status
-     * @param bool|null $admin_verified Filter by admin verification status
-     * @param int|null $admin_user_id Filter by user ID
+     * @param string|null $transaction_status Filter by transaction_status
+     * @param bool|null $admin_verified Filter by admin verification transaction_status
      * @param string|null $search General search term
      * @return int Total number of matching transactions
      */
     public function getTotalTransactionCount(
         $request_id = null,
-        $status = null,
+        $transaction_status = null,
         $admin_verified = null,
-        $admin_user_id = null,
         $search = null
     ) {
         try {
@@ -129,17 +120,14 @@ class Transaction
             if ($request_id !== null) {
                 $sql .= " AND request_id = :request_id";
             }
-            if ($status !== null) {
-                $sql .= " AND status = :status";
+            if ($transaction_status !== null) {
+                $sql .= " AND transaction_status = :transaction_status";
             }
             if ($admin_verified !== null) {
                 $sql .= " AND admin_verified = :admin_verified";
             }
-            if ($admin_user_id !== null) {
-                $sql .= " AND admin_user_id = :admin_user_id";
-            }
             if ($search !== null) {
-                $sql .= " AND (borrower_name LIKE :search OR item_borrowed LIKE :search OR purpose LIKE :search)";
+                $sql .= " AND (borrower_name LIKE :search OR items_borrowed LIKE :search OR purpose LIKE :search)";
             }
 
             $stmt = $this->db->prepare($sql);
@@ -147,15 +135,12 @@ class Transaction
             if ($request_id !== null) {
                 $stmt->bindParam(':request_id', $request_id, PDO::PARAM_INT);
             }
-            if ($status !== null) {
-                $stmt->bindParam(':status', $status, PDO::PARAM_STR);
+            if ($transaction_status !== null) {
+                $stmt->bindParam(':transaction_status', $transaction_status, PDO::PARAM_STR);
             }
             if ($admin_verified !== null) {
                 $adminVerifiedValue = $admin_verified ? 1 : 0;
                 $stmt->bindParam(':admin_verified', $adminVerifiedValue, PDO::PARAM_INT);
-            }
-            if ($admin_user_id !== null) {
-                $stmt->bindParam(':admin_user_id', $admin_user_id, PDO::PARAM_INT);
             }
             if ($search !== null) {
                 $searchTerm = "%$search%";
@@ -200,18 +185,11 @@ class Transaction
     public function create($data)
     {
         try {
-            $sql = "INSERT INTO tbl_transactions (request_id, admin_user_id, transaction_date)
-                    VALUES (:request_id, :admin_user_id, NOW())";
+            $sql = "INSERT INTO tbl_transactions (request_id, transaction_date)
+                    VALUES (:request_id, NOW())";
 
             $stmt = $this->db->prepare($sql);
             $stmt->bindParam(':request_id', $data->request_id, PDO::PARAM_INT);
-
-            // Handle null admin_user_id
-            if (isset($data->admin_user_id) && $data->admin_user_id !== null) {
-                $stmt->bindParam(':admin_user_id', $data->admin_user_id, PDO::PARAM_INT);
-            } else {
-                $stmt->bindValue(':admin_user_id', null, PDO::PARAM_NULL);
-            }
 
             return $stmt->execute();
         } catch (Exception $e) {
