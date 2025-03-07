@@ -1,46 +1,70 @@
 <?php
 require_once __DIR__ . '/../models/ActivityLog.php';
-class ActivityLogController {
-        /**
-     * List all activity logs.
+
+/**
+ * Class ActivityLogController
+ * 
+ * Handles activity log operations, including listing, retrieving, creating, updating, and deleting logs.
+ */
+class ActivityLogController
+{
+
+    private $model;
+
+    /**
+     * Constructor initializes the ActivityLog model.
      */
-    public function listLogs() {
-        // Get pagination params from query string
+    public function __construct()
+    {
+        $this->model = new ActivityLog();
+    }
+
+    /**
+     * List all activity logs with pagination and filtering options.
+     * 
+     * Query Parameters:
+     * - `limit` (int)        : Number of logs per page (default: 10).
+     * - `page` (int)         : Current page number.
+     * - `role_id` (string) : Filter by user role (optional).
+     * - `action_type` (string): Filter by action type (optional).
+     * - `start_date` (string): Filter logs from this date (YYYY-MM-DD, optional).
+     * - `end_date` (string)  : Filter logs up to this date (YYYY-MM-DD, optional).
+     * - `search_query` (string): Search within action descriptions (optional).
+     */
+    public function listLogs()
+    {
         $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
         $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
         $offset = ($page - 1) * $limit;
-        $user_type = isset($_GET['user_type']) ? $_GET['user_type'] : null;
-        $action_type = isset($_GET['action_type']) ? $_GET['action_type'] : null;
-        $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : null;
-        $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : null;
-        $search_query = isset($_GET['search_query']) ? $_GET['search_query'] : null;
+
+        $role_id = $_GET['role_id'] ?? null;
+        $action_type = $_GET['action_type'] ?? null;
+
+        $start_date = $_GET['start_date'] ?? null;
+        $end_date = $_GET['end_date'] ?? null;
+
+        $search_query = $_GET['search_query'] ?? null;
 
         try {
-            $activityLog = new ActivityLog();
-            $logs = $activityLog->getAll($limit, $offset, $user_type, $action_type, $start_date, $end_date, $search_query);
-            $totalLogs = $activityLog->getTotalCount($user_type, $action_type, $start_date, $end_date, $search_query);
+            $logs = $this->model->getAll($limit, $offset, $role_id, $action_type, $start_date, $end_date, $search_query);
+            $totalLogs = $this->model->getTotalCount($role_id, $action_type, $start_date, $end_date, $search_query);
 
-            // Return paginated logs and total count in JSON
-            echo json_encode([
-                "logs" => $logs,
-                "totalLogs" => $totalLogs,
-            ]);
+            echo json_encode(["logs" => $logs, "totalLogs" => $totalLogs]);
         } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode([
-                "message" => "Error fetching logs",
-                "error" => $e->getMessage()
-            ]);
+            echo json_encode(["message" => "Error fetching logs", "error" => $e->getMessage()]);
         }
     }
 
     /**
-     * Get a single activity log by ID.
+     * Retrieve a single activity log by ID.
+     * 
+     * @param int $id Activity log ID.
      */
-    public function getLog($id) {
-        $activityLog = new ActivityLog();
+    public function getLog($id)
+    {
         try {
-            $log = $activityLog->getById($id);
+            $log = $this->model->getLogById($id);
             if ($log) {
                 echo json_encode($log);
             } else {
@@ -52,19 +76,21 @@ class ActivityLogController {
             echo json_encode(["message" => "Error fetching log", "error" => $e->getMessage()]);
         }
     }
-    
+
     /**
      * Create a new activity log entry.
+     * 
+     * @param object $data JSON object containing user_id, user_name, role_id, action_type, and action_description.
      */
-    public function createLog($data) {
-        if (!isset($data->user_id, $data->user_name, $data->role, $data->action_type, $data->action)) {
+    public function createLog($data)
+    {
+        if (!isset($data->user_id, $data->user_name, $data->role_id, $data->action_type, $data->action_description, $data->module)) {
             http_response_code(400);
-            echo json_encode(["message" => "user_id, and action are required"]);
+            echo json_encode(["message" => "Missing required fields: user_id, user_name, role_id, action_type, action_description"]);
             return;
         }
-        $activityLog = new ActivityLog();
         try {
-            $id = $activityLog->create($data->user_id, $data->user_name, $data->role, $data->action_type, $data->action);
+            $id = $this->model->create($data->user_id, $data->user_name, $data->role_id, $data->action_type, $data->action_description, $data->module);
             echo json_encode(["message" => "Activity log created", "id" => $id]);
         } catch (Exception $e) {
             http_response_code(500);
@@ -73,17 +99,21 @@ class ActivityLogController {
     }
 
     /**
-     * Update an activity log's action.
+     * Update an existing activity log's action description.
+     * 
+     * @param int $id Log ID to update.
+     * @param object $data JSON object containing updated action_description.
      */
-    public function updateLog($id, $data) {
-        if (!isset($data->action)) {
+    public function updateLog($id, $data)
+    {
+        if (!isset($data->action_description)) {
             http_response_code(400);
-            echo json_encode(["message" => "action is required for update"]);
+            echo json_encode(["message" => "action_description is required for update"]);
             return;
         }
         $activityLog = new ActivityLog();
         try {
-            $activityLog->update($id, $data->action);
+            $$this->model->update($id, $data->action_description);
             echo json_encode(["message" => "Activity log updated successfully"]);
         } catch (Exception $e) {
             http_response_code(500);
@@ -92,9 +122,12 @@ class ActivityLogController {
     }
 
     /**
-     * Delete an activity log.
+     * Delete an activity log by ID.
+     * 
+     * @param int $id Log ID to delete.
      */
-    public function deleteLog($id) {
+    public function deleteLog($id)
+    {
         $activityLog = new ActivityLog();
         try {
             $activityLog->delete($id);
@@ -105,4 +138,3 @@ class ActivityLogController {
         }
     }
 }
-?>
