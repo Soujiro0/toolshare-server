@@ -10,7 +10,7 @@ CREATE TABLE tbl_roles (
 );
 
 -- Insert predefined roles
-INSERT INTO tbl_roles (role_name) VALUES ('Super Admin'), ('Admin'), ('Instuctor');
+INSERT INTO tbl_roles (role_name) VALUES ('Super Admin'), ('Admin'), ('Instructor');
 
 -- ====================================
 -- 2. USERS TABLE (Admins & Instructor in One Table)
