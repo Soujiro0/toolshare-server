@@ -36,7 +36,7 @@ class BorrowRequest
                     bri.returned_date,
                     bri.date_created,
                     bri.date_updated,
-                    i.name AS item_name,
+                    i.name AS name,
                     i.unit
                 FROM tbl_borrow_request_items bri
                 JOIN tbl_items i ON i.item_id = bri.item_id
@@ -67,19 +67,65 @@ class BorrowRequest
         }
     }
 
+    public function getByUserId($user_id)
+    {
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM tbl_borrow_requests WHERE user_id = :user_id");
+            $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+            // Fetch associated items for each borrow request
+            foreach ($requests as &$request) {
+                $stmtItems = $this->db->prepare("
+                    SELECT 
+                        bri.request_item_id,
+                        bri.request_id,
+                        bri.item_id,
+                        bri.quantity,
+                        bri.item_condition_out,
+                        bri.item_condition_in,
+                        bri.damage_notes,
+                        bri.returned_date,
+                        bri.date_created,
+                        bri.date_updated,
+                        i.name AS name,
+                        i.unit
+                    FROM tbl_borrow_request_items bri
+                    JOIN tbl_items i ON i.item_id = bri.item_id
+                    WHERE bri.request_id = :request_id
+                ");
+                $stmtItems->bindParam(':request_id', $request['request_id'], PDO::PARAM_INT);
+                $stmtItems->execute();
+                $request['borrowed_items'] = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
+            }
+    
+            return $requests;
+        } catch (Exception $e) {
+            error_log("Error fetching borrow requests for user $user_id: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+
     public function create()
     {
         try {
-            $stmt = $this->db->prepare("INSERT INTO tbl_borrow_requests (user_id, status, remarks) VALUES (:user_id, :status, :remarks)");
+            $stmt = $this->db->prepare("INSERT INTO tbl_borrow_requests (user_id, remarks) VALUES (:user_id, :remarks)");
             $stmt->bindParam(':user_id', $this->user_id);
-            $stmt->bindParam(':status', $this->status);
             $stmt->bindParam(':remarks', $this->remarks);
-            return $stmt->execute();
+
+            if ($stmt->execute()) {
+                return $this->db->lastInsertId(); // ✅ Return last inserted request_id
+            } else {
+                return false;
+            }
         } catch (Exception $e) {
             error_log("Error saving borrow request: " . $e->getMessage());
             return false;
         }
     }
+
 
     public function update($id, $data)
     {

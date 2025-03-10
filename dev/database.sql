@@ -40,7 +40,7 @@ CREATE TABLE tbl_item_category (
 -- ====================================
 CREATE TABLE tbl_items (
     item_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    name VARCHAR(255) NOT NULL,
     property_no VARCHAR(50) UNIQUE,
     category_id INT UNSIGNED NOT NULL,
     quantity INT NOT NULL DEFAULT 1,

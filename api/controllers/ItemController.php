@@ -53,19 +53,19 @@ class ItemController
         try {
             $this->model->property_no = $data->property_no;
             $this->model->name = $data->name;
-            $this->model->category_id = $data->category_id;
+            $this->model->category_id = intval($data->category_id);
             $this->model->quantity = $data->quantity;
             $this->model->unit = $data->unit;
             $this->model->specification = $data->specification;
-            $this->model->status = $data->status ?? 'Available';
-            $this->model->item_condition = $data->item_condition ?? 'Good';
+            $this->model->status = $data->status ?? 'AVAILABLE';
+            $this->model->item_condition = $data->item_condition ?? 'GOOD';
             $this->model->acquisition_date = $data->acquisition_date ?? null;
     
             if ($this->model->create()) {
                 echo json_encode(["message" => "Item created successfully"]);
             } else {
                 http_response_code(500);
-                echo json_encode(["message" => "Error creating item"]);
+                echo json_encode(["message" => "Error creating item check"]);
             }
         } catch (Exception $e) {
             http_response_code(500);

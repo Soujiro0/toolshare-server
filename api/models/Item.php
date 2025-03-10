@@ -23,12 +23,12 @@ class Item
     public function create()
     {
         try {
-            $sql = "INSERT INTO tbl_items (property_no, name, category_id, quantity, unit, specification, status, item_condition, acquisition_date) 
-                    VALUES (:property_no, :name, :category_id, :quantity, :unit, :specification, :status, :item_condition, :acquisition_date)";
+            $sql = "INSERT INTO tbl_items (name, property_no, category_id, quantity, unit, specification, status, item_condition, acquisition_date) 
+                    VALUES (:name, :property_no, :category_id, :quantity, :unit, :specification, :status, :item_condition, :acquisition_date)";
             
             $stmt = $this->db->prepare($sql);
-            $stmt->bindParam(':property_no', $this->property_no);
             $stmt->bindParam(':name', $this->name);
+            $stmt->bindParam(':property_no', $this->property_no);
             $stmt->bindParam(':category_id', $this->category_id, PDO::PARAM_INT);
             $stmt->bindParam(':quantity', $this->quantity, PDO::PARAM_INT);
             $stmt->bindParam(':unit', $this->unit);

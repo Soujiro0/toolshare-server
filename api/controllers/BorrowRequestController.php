@@ -50,6 +50,25 @@ class BorrowRequestController
         }
     }
 
+    public function getRequestByUserId($userId)
+    {
+        try {
+            $requests = $this->model->getByUserId($userId);
+            $totalRequests = count($requests);
+            echo json_encode([
+                "request" => $requests,
+                "total_requests" => $totalRequests
+            ]);
+
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                "message" => "Error retrieving request",
+                "error" => $e->getMessage()
+            ]);
+        }
+    }
+
     // POST /api/borrow-requests
     public function createRequest($data)
     {
@@ -57,8 +76,13 @@ class BorrowRequestController
             $this->model->user_id = $data->user_id;
             $this->model->remarks = $data->remarks;
 
-            if ($this->model->create()) {
-                echo json_encode(["message" => "Request created successfully"]);
+            $requestId = $this->model->create(); // Modify create() to return last insert ID
+
+            if ($requestId) {
+                echo json_encode([
+                    "message" => "Request created successfully",
+                    "request_id" => $requestId
+                ]);
             } else {
                 http_response_code(500);
                 echo json_encode(["message" => "Error creating request"]);
@@ -71,6 +95,7 @@ class BorrowRequestController
             ]);
         }
     }
+
 
     public function updateRequest($id, $data)
     {

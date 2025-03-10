@@ -1,28 +1,22 @@
 <?php
-// api/routes/items.php
 header("Content-Type: application/json");
 require_once __DIR__ . '/../cors.php';
-require_once __DIR__ . '/../controllers/BorrowRequestController.php';
+require_once __DIR__ . '/../controllers/UserController.php';
 require_once __DIR__ . '/../auth/middleware.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
-$controller = new BorrowRequestController();
+$controller = new UserController();
 
 $requestUri = strtok($_SERVER['REQUEST_URI'], '?'); 
 $segments = explode('/', trim($requestUri, '/')); 
-$requestId = isset($segments[count($segments) - 1]) && is_numeric($segments[count($segments) - 1]) 
-    ? intval($segments[count($segments) - 1]) 
-    : null;
+$userId = isset($segments[4]) ? intval($segments[4]) : null;
 
 switch ($method) {
     case 'GET':
-        if ($requestId) { 
-            $items = $controller->getRequestById($requestId);
-        } elseif (isset($_GET['user_id'])) {
-            $user_id = intval($_GET['user_id']);
-            $items = $controller->getRequestByUserId($user_id);
-        } else { 
-            $items = $controller->getAllRequest();
+        if ($userId) {
+            $controller->getUserById($userId);
+        } else {
+            $controller->getAllUsers();
         }
         break;
 
@@ -33,30 +27,30 @@ switch ($method) {
             echo json_encode(["message" => "Invalid JSON payload"]);
             exit;
         }
-        $controller->createRequest($data);
+        $controller->createUser($data);
         break;
 
     case 'PUT':
-        if ($requestId) {
+        if ($userId) {
             $data = json_decode(file_get_contents("php://input"));
             if (!$data) {
                 http_response_code(400);
                 echo json_encode(["message" => "Invalid JSON payload"]);
                 exit;
             }
-            $controller->updateRequest($requestId, $data);
+            $controller->updateUser($userId, $data);
         } else {
             http_response_code(400);
-            echo json_encode(["message" => "Missing request ID"]);
+            echo json_encode(["message" => "Missing user ID"]);
         }
         break;
 
     case 'DELETE':
-        if ($requestId) {
-            $controller->deleteRequest($requestId);
+        if ($userId) {
+            $controller->deleteUser($userId);
         } else {
             http_response_code(400);
-            echo json_encode(["message" => "Missing request ID"]);
+            echo json_encode(["message" => "Missing user ID"]);
         }
         break;
 
@@ -65,3 +59,4 @@ switch ($method) {
         echo json_encode(["message" => "Method not allowed"]);
         break;
 }
+?>

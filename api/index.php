@@ -1,13 +1,15 @@
 <?php
 header("Content-Type: application/json");
 
-$requestUri = strtok($_SERVER['REQUEST_URI'], '?'); // Remove query strings
+$basePath = '/toolshare-server'; // Change this if your project is in a different subdirectory
+$requestUri = str_replace($basePath, '', strtok($_SERVER['REQUEST_URI'], '?')); 
 
 // Define route mappings
 $routes = [
     '/api/login' => 'routes/login.php',
     '/api/items' => 'routes/items.php',
-    '/api/categories' => 'routes/categories.php'
+    '/api/categories' => 'routes/categories.php',
+    '/api/user' => 'routes/user.php'
 ];
 
 // Route handling
