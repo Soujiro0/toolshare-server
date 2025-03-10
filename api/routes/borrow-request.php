@@ -2,22 +2,27 @@
 // api/routes/items.php
 header("Content-Type: application/json");
 require_once __DIR__ . '/../cors.php';
-require_once __DIR__ . '/../controllers/CategoryController.php';
+require_once __DIR__ . '/../controllers/BorrowRequestController.php';
 require_once __DIR__ . '/../auth/middleware.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
-$controller = new CategoryController();
+$controller = new BorrowRequestController();
 
 $requestUri = strtok($_SERVER['REQUEST_URI'], '?'); 
 $segments = explode('/', trim($requestUri, '/')); 
-$itemId = isset($segments[4]) ? intval($segments[4]) : null;
+$requestId = isset($segments[count($segments) - 1]) && is_numeric($segments[count($segments) - 1]) 
+    ? intval($segments[count($segments) - 1]) 
+    : null;
 
 switch ($method) {
     case 'GET':
-        if ($itemId) { 
-            $item = $controller->getCategoryById($itemId);
+        if ($requestId) { 
+            $items = $controller->getRequestById($requestId);
+        } elseif (isset($_GET['user_id'])) {
+            $user_id = intval($_GET['user_id']);
+            $items = $controller->getRequestByUserId($user_id);
         } else { 
-            $items = $controller->getAllCategory();
+            $items = $controller->getAllRequest();
         }
         break;
 
@@ -28,30 +33,30 @@ switch ($method) {
             echo json_encode(["message" => "Invalid JSON payload"]);
             exit;
         }
-        $controller->createCategory($data);
+        $controller->createRequest($data);
         break;
 
     case 'PUT':
-        if ($itemId) {
+        if ($requestId) {
             $data = json_decode(file_get_contents("php://input"));
             if (!$data) {
                 http_response_code(400);
                 echo json_encode(["message" => "Invalid JSON payload"]);
                 exit;
             }
-            $controller->updateCategory($itemId, $data);
+            $controller->updateRequest($requestId, $data);
         } else {
             http_response_code(400);
-            echo json_encode(["message" => "Missing item ID"]);
+            echo json_encode(["message" => "Missing request ID"]);
         }
         break;
 
     case 'DELETE':
-        if ($itemId) {
-            $controller->deleteCategory($itemId);
+        if ($requestId) {
+            $controller->deleteRequest($requestId);
         } else {
             http_response_code(400);
-            echo json_encode(["message" => "Missing item ID"]);
+            echo json_encode(["message" => "Missing request ID"]);
         }
         break;
 

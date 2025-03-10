@@ -27,40 +27,55 @@ class AuthController
      */
     public function login($username, $password)
     {
-        // Query the unified users table
-        $sql = "
-            SELECT user_id, name, password, role_id, user_type
-            FROM tbl_users
-            WHERE username = :username
-            LIMIT 1;
-        ";
+        try {
+            // Query the users table
+            $sql = "
+                SELECT user_id, name, password, role_id
+                FROM tbl_users
+                WHERE username = :username
+                LIMIT 1;
+            ";
 
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(':username', $username);
-        $stmt->execute();
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            $stmt = $this->db->prepare($sql);
+            $stmt->bindParam(':username', $username);
+            $stmt->execute();
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Verify password and return JWT token if valid
-        if ($user && password_verify($password, $user['password'])) {
-            // Fetch role name
-            $roleSql = "SELECT role_name FROM tbl_roles WHERE role_id = :role_id LIMIT 1";
-            $roleStmt = $this->db->prepare($roleSql);
-            $roleStmt->bindParam(':role_id', $user['role_id']);
-            $roleStmt->execute();
-            $role = $roleStmt->fetch(PDO::FETCH_ASSOC)['role_name'] ?? 'Unknown';
+            // Verify password and return JWT token if valid
+            if ($user && password_verify($password, $user['password'])) {
+                // Fetch role name
+                $roleSql = "SELECT role_name FROM tbl_roles WHERE role_id = :role_id LIMIT 1";
+                $roleStmt = $this->db->prepare($roleSql);
+                $roleStmt->bindParam(':role_id', $user['role_id']);
+                $roleStmt->execute();
+                $role = $roleStmt->fetch(PDO::FETCH_ASSOC)['role_name'] ?? 'Unknown';
 
-            $token = Auth::generateToken($user['user_id'], $user['name'], $role);
+                // Generate JWT token
+                $token = Auth::generateToken($user['user_id'], $user['name'], $role);
 
+                // Update last login timestamp
+                // $updateSql = "UPDATE tbl_users SET last_login = NOW() WHERE user_id = :user_id";
+                // $updateStmt = $this->db->prepare($updateSql);
+                // $updateStmt->bindParam(':user_id', $user['user_id']);
+                // $updateStmt->execute();
+
+                echo json_encode([
+                    "token" => $token,
+                    "user_id" => $user['user_id'],
+                    "name" => $user['name'],
+                    "role" => $role
+                ]);
+            } else {
+                http_response_code(401);
+                echo json_encode(["message" => "Invalid credentials"]);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
             echo json_encode([
-                "token" => $token,
-                "user_id" => $user['user_id'],
-                "name" => $user['name'],
-                "role" => $role,
-                "user_type" => $user['user_type']
+                "message" => "Authentication failed",
+                "error" => $e->getMessage()
             ]);
-        } else {
-            http_response_code(401);
-            echo json_encode(["message" => "Invalid credentials"]);
         }
     }
 }
+?>

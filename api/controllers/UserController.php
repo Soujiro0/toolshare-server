@@ -3,79 +3,100 @@ require_once __DIR__ . '/../models/User.php';
 
 class UserController
 {
-    private $userModel;
+    private $model;
 
     public function __construct()
     {
-        $this->userModel = new User();
+        $this->model = new User();
     }
 
-    // Get all users with optional role_id filter
-    public function getUsers()
+    public function getAllUsers()
     {
-        $role_id = isset($_GET['role_id']) ? intval($_GET['role_id']) : null;
-        echo json_encode($this->userModel->getAllUsers($role_id));
-    }
+        try {
+            $users = $this->model->getAll();
+            $totalUsers = count($users);
 
-
-    // Get user by ID
-    public function getUser($user_id)
-    {
-        $user = $this->userModel->getUserById($user_id);
-        if ($user) {
-            echo json_encode($user);
-        } else {
-            http_response_code(404);
-            echo json_encode(["message" => "User not found"]);
-        }
-    }
-
-    // Create a new user
-    public function createUser()
-    {
-        $data = json_decode(file_get_contents("php://input"), true);
-
-        if (!isset($data['username'], $data['name'], $data['password'], $data['email'], $data['role_id'], $data['user_type'])) {
-            http_response_code(400);
-            echo json_encode(["message" => "Missing required fields"]);
-            return;
-        }
-
-        if ($this->userModel->createUser($data['username'], $data['name'], $data['password'], $data['email'], $data['role_id'], $data['user_type'])) {
-            echo json_encode(["message" => "User created successfully"]);
-        } else {
+            echo json_encode([
+                "users" => $users,
+                "total_users" => $totalUsers,
+            ]);
+        } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode(["message" => "Failed to create user"]);
+            echo json_encode([
+                "message" => "Error fetching users",
+                "error" => $e->getMessage()
+            ]);
         }
     }
 
-    // Update an existing user
-    public function updateUser($user_id)
+    public function getUserById($id)
     {
-        $data = json_decode(file_get_contents("php://input"), true);
-
-        if (!isset($data['username'], $data['name'], $data['email'], $data['role_id'], $data['user_type'])) {
-            http_response_code(400);
-            echo json_encode(["message" => "Missing required fields"]);
-            return;
-        }
-
-        if ($this->userModel->updateUser($user_id, $data['username'], $data['name'], $data['email'], $data['role_id'], $data['user_type'])) {
-            echo json_encode(["message" => "User updated successfully"]);
-        } else {
+        try {
+            $user = $this->model->getById($id);
+            if ($user) {
+                echo json_encode(["user" => $user]);
+            } else {
+                http_response_code(404);
+                echo json_encode(["message" => "User not found"]);
+            }
+        } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode(["message" => "Failed to update user"]);
+            echo json_encode([
+                "message" => "Error retrieving user",
+                "error" => $e->getMessage()
+            ]);
         }
     }
 
-    // Delete a user
-    public function deleteUser($user_id)
+    public function createUser($data)
     {
-        if ($this->userModel->deleteUser($user_id)) {
+        try {
+            $this->model->username = $data->username;
+            $this->model->name = $data->name;
+            $this->model->password = $data->password;
+            $this->model->email = $data->email;
+            $this->model->role_id = intval($data->role_id);
+
+            if ($this->model->create()) {
+                echo json_encode(["message" => "User created successfully"]);
+            } else {
+                http_response_code(500);
+                echo json_encode(["message" => "Error creating user"]);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(["message" => "Error creating user", "error" => $e->getMessage()]);
+        }
+    }
+
+    public function updateUser($id, $data)
+    {
+        try {
+            if ($this->model->update($id, $data)) {
+                echo json_encode(["message" => "User updated successfully"]);
+            } else {
+                http_response_code(500);
+                echo json_encode(["message" => "Error updating user"]);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                "message" => "Error updating user",
+                "error" => $e->getMessage()
+            ]);
+        }
+    }
+    
+    
+
+    public function deleteUser($id)
+    {
+        if ($this->model->delete($id)) {
             echo json_encode(["message" => "User deleted successfully"]);
         } else {
             http_response_code(500);
-            echo json_encode(["message" => "Failed to delete user"]);
+            echo json_encode(["message" => "Error deleting user"]);
         }
     }
 }
+?>

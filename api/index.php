@@ -1,17 +1,22 @@
 <?php
 header("Content-Type: application/json");
 
-$request = $_SERVER['REQUEST_URI'];
-$method  = $_SERVER['REQUEST_METHOD'];
+$basePath = '/toolshare-server'; // Change this if your project is in a different subdirectory
+$requestUri = str_replace($basePath, '', strtok($_SERVER['REQUEST_URI'], '?')); 
 
-// Basic routing logic (for a production system, consider using a routing library)
-if (strpos($request, '/api/login') !== false) {
-    require 'routes/login.php';
-} elseif (strpos($request, '/api/borrow-requests') !== false) {
-    require 'routes/borrow.php';
-} elseif (strpos($request, '/api/items') !== false) {
-    require 'routes/items.php';
+// Define route mappings
+$routes = [
+    '/api/login' => 'routes/login.php',
+    '/api/items' => 'routes/items.php',
+    '/api/categories' => 'routes/categories.php',
+    '/api/user' => 'routes/user.php'
+];
+
+// Route handling
+if (array_key_exists($requestUri, $routes)) {
+    require $routes[$requestUri];
 } else {
     http_response_code(404);
-    echo json_encode(["message" => "Endpoint not found"]);
+    echo json_encode(["error" => "Endpoint not found"]);
 }
+
