@@ -34,8 +34,8 @@ class Item
             $stmt->bindParam(':category_id', $this->category_id, PDO::PARAM_INT);
             $stmt->bindParam(':quantity', $this->quantity, PDO::PARAM_INT);
             $stmt->bindParam(':unit', $this->unit);
-            $stmt->bindParam('brand', $this->brand);
-            $stmt->bindParam('model', $this->model);
+            $stmt->bindParam(':brand', $this->brand);
+            $stmt->bindParam(':model', $this->model);
             $stmt->bindParam(':specification', $this->specification);
             $stmt->bindParam(':status', $this->status);
             $stmt->bindParam(':item_condition', $this->item_condition);

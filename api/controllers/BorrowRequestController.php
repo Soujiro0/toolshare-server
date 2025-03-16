@@ -102,7 +102,7 @@ class BorrowRequestController
         try {
 
             // Check if we're approving the request
-            if (isset($data->status) && $data->status === 'APPROVED' || $data->status === 'RETURNED') {
+            if (isset($data->status) && $data->status === 'APPROVED' || $data->status === 'BORROWED' || $data->status === 'RETURNED') {
                 $result = $this->model->updateRequestAndApprove($id, $data);
             } else {
                 $result = $this->model->update($id, $data);

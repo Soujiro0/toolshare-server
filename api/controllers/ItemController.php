@@ -51,12 +51,14 @@ class ItemController
     public function createItem($data)
     {
         try {
-            $this->model->property_no = $data->property_no;
+            $this->model->property_no = $data->property_no ?? null;
             $this->model->name = $data->name;
-            $this->model->category_id = intval($data->category_id);
-            $this->model->quantity = $data->quantity;
-            $this->model->unit = $data->unit;
-            $this->model->specification = $data->specification;
+            $this->model->category_id = intval($data->category_id ?? 1);
+            $this->model->quantity = $data->quantity ?? 1;
+            $this->model->unit = $data->unit ?? 'pcs';
+            $this->model->brand = $data->brand ?? null;
+            $this->model->model = $data->model ?? null;
+            $this->model->specification = $data->specification ?? null;
             $this->model->status = $data->status ?? 'AVAILABLE';
             $this->model->item_condition = $data->item_condition ?? 'GOOD';
             $this->model->acquisition_date = $data->acquisition_date ?? null;

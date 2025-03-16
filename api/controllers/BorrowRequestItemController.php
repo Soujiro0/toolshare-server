@@ -21,6 +21,19 @@ class BorrowRequestItemController {
         }
     }
 
+    public function getBorrowHistoryByItemId($item_id) {
+        $model = new BorrowRequestItem();
+        $history = $model->getHistory($item_id);
+        
+        if ($history) {
+            echo json_encode(["borrow_history" => $history]);
+        } else {
+            http_response_code(404);
+            echo json_encode(["message" => "No borrow history found for this item"]);
+        }
+    }
+    
+
     public function createBorrowRequestItem($data) {
         $model = new BorrowRequestItem();
         $model->request_id         = $data->request_id;         // The borrow request this item belongs to
