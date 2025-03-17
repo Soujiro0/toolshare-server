@@ -75,7 +75,7 @@ class User
                     SET username = :username, 
                         name = :name, 
                         email = :email, 
-                        password = :password, 
+                        password = :password,
                         role_id = :role_id, 
                         last_updated = NOW() 
                     WHERE user_id = :user_id";

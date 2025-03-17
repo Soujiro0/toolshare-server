@@ -14,8 +14,12 @@ $itemRequestId = isset($segments[4]) ? intval($segments[4]) : null;
 
 switch ($method) {
     case 'GET':
-        if ($itemRequestId) { 
-            $controller->getBorrowRequestItemById($itemRequestId);
+        if ($itemRequestId) {
+            if (isset($_GET['history']) && $_GET['history'] == 'true') {
+                $controller->getBorrowHistoryByItemId($itemRequestId);
+            } else {
+                $controller->getBorrowRequestItemById($itemRequestId);
+            }
         } else { 
             $controller->getAllBorrowRequestItems();
         }

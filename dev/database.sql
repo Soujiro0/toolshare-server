@@ -10,7 +10,7 @@ CREATE TABLE tbl_roles (
 );
 
 -- Insert predefined roles
-INSERT INTO tbl_roles (role_name) VALUES ('Super Admin'), ('Admin'), ('Instuctor');
+INSERT INTO tbl_roles (role_name) VALUES ('SUPER ADMIN'), ('ADMIN'), ('INSTRUCTOR');
 
 -- ====================================
 -- 2. USERS TABLE (Admins & Instructor in One Table)
@@ -45,8 +45,10 @@ CREATE TABLE tbl_items (
     category_id INT UNSIGNED NOT NULL,
     quantity INT NOT NULL DEFAULT 1,
     unit VARCHAR(20) NOT NULL,
+    brand VARCHAR(100) NULL,
+    model VARCHAR(100) NULL,
     specification TEXT,
-    status ENUM('AVAILABLE', 'NO STOCK', 'IN USE', 'UNDER REPAIR') NOT NULL DEFAULT 'AVAILABLE',
+    status ENUM('AVAILABLE', 'NO_STOCK', 'IN_USE', 'UNDER_REPAIR') NOT NULL DEFAULT 'AVAILABLE',
     item_condition ENUM('EXCELLENT', 'GOOD', 'FAIR', 'POOR') NOT NULL DEFAULT 'GOOD',
     acquisition_date DATE,
     date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -60,12 +62,16 @@ CREATE TABLE tbl_items (
 CREATE TABLE tbl_borrow_requests (
     request_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL,
-    request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- When the request was made
+    processed_date TIMESTAMP NULL DEFAULT NULL, -- When the request was approved/rejected
+    return_date TIMESTAMP NULL DEFAULT NULL, -- When the item was returned
     status ENUM('PENDING', 'APPROVED', 'REJECTED', 'BORROWED', 'RETURNED') DEFAULT 'PENDING',
-    remarks TEXT,
+    remarks TEXT NULL,
+    handled_by BIGINT UNSIGNED NULL, -- The person who approved/rejected the request
     date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     date_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES tbl_users(user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES tbl_users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (handled_by) REFERENCES tbl_users(user_id) ON DELETE SET NULL
 );
 
 -- ====================================
