@@ -38,6 +38,39 @@ class BorrowRequestItem {
         }
     }
 
+    public function getHistory($item_id) {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT 
+                    bri.request_item_id,
+                    bri.request_id,
+                    bri.item_id,
+                    bri.quantity,
+                    bri.item_condition_out,
+                    bri.item_condition_in,
+                    bri.damage_notes,
+                    bri.returned_date,
+                    bri.date_created,
+                    br.user_id,
+                    u.name AS borrower_name,
+                    br.status
+                FROM tbl_borrow_request_items bri
+                JOIN tbl_borrow_requests br ON bri.request_id = br.request_id
+                JOIN tbl_users u ON br.user_id = u.user_id
+                WHERE bri.item_id = :item_id
+                ORDER BY bri.date_created DESC
+            ");
+            
+            $stmt->bindParam(':item_id', $item_id, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Error fetching borrow history: " . $e->getMessage());
+            return [];
+        }
+    }
+
     public function create() {
         try {
             $stmt = $this->db->prepare("INSERT INTO tbl_borrow_request_items (request_id, item_id, quantity, item_condition_out) VALUES (:request_id, :item_id, :quantity, :item_condition_out)");
