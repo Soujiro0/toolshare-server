@@ -1,0 +1,906 @@
+{
+	"info": {
+		"_postman_id": "86fbe7f5-f9a5-4e94-a0d4-061c83b9522a",
+		"name": "ToolShare - Server API  V2",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "42724955"
+	},
+	"item": [
+		{
+			"name": "Authentication API",
+			"item": [
+				{
+					"name": "Authentication",
+					"request": {
+						"auth": {
+							"type": "jwt",
+							"jwt": [
+								{
+									"key": "payload",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "secret",
+									"value": "JWT_SECRET_KEY",
+									"type": "string"
+								},
+								{
+									"key": "isSecretBase64Encoded",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "algorithm",
+									"value": "HS256",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								},
+								{
+									"key": "headerPrefix",
+									"value": "Bearer",
+									"type": "string"
+								},
+								{
+									"key": "queryParamKey",
+									"value": "token",
+									"type": "string"
+								},
+								{
+									"key": "header",
+									"value": "{}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\" : \"newadmin\",\r\n    \"password\" : \"pass112233\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost/toolshare-server/api/routes/login.php",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"toolshare-server",
+								"api",
+								"routes",
+								"login.php"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Inventory Management Module API",
+			"item": [
+				{
+					"name": "Items",
+					"item": [
+						{
+							"name": "Get All Items",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/items.php",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"items.php"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Item By  ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/items.php/1",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"items.php",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Item/Multi Unit",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Hand Drill\",\r\n  \"category_id\": 1,\r\n  \"unit\": \"pcs\",\r\n  \"acquisition_date\": \"2025-04-06\",\r\n  \"units\": [\r\n    {\r\n      \"brand\": \"No Brand\",\r\n      \"model\": \"ModelY\",\r\n      \"specification\": \"Standard\",\r\n      \"item_condition\": \"GOOD\",\r\n      \"quantity\": 3\r\n    },\r\n    {\r\n      \"brand\": \"Brand A\",\r\n      \"model\": \"ModelA\",\r\n      \"specification\": \"Standard\",\r\n      \"item_condition\": \"GOOD\",\r\n      \"quantity\": 2\r\n    }\r\n  ]\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/items.php/",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"items.php",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Item/Single Unit",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Tube Cutter 5\",\r\n  \"category_id\": 1,\r\n  \"unit\": \"pcs\",\r\n  \"acquisition_date\": \"2025-04-06\",\r\n  \"units\": [\r\n    {\r\n      \"brand\": \"Brand A\",\r\n      \"model\": \"ModelY\",\r\n      \"specification\": \"Standard\",\r\n      \"item_condition\": \"GOOD\",\r\n      \"quantity\": 3\r\n    }\r\n  ]\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/items.php/",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"items.php",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Item Details",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Updated Screwdriver\",\r\n  \"category_id\": 1,\r\n  \"unit\": \"pcs\",\r\n  \"acquisition_date\": \"2025-04-06\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/items.php/2",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"items.php",
+										"2"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Unit Details",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"item_condition\": \"EXCELLENT\",\r\n  \"status\": \"AVAILABLE\",\r\n  \"brand\": \"BrandZZZ\",\r\n  \"model\": \"Model123\",\r\n  \"specification\": \"High durability, waterproof\",\r\n  \"date_acquired\": \"2025-04-06\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/items.php/units/31",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"items.php",
+										"units",
+										"31"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Item",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/items.php/9",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"items.php",
+										"9"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Unit",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/items.php/units/35",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"items.php",
+										"units",
+										"35"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Category",
+					"item": [
+						{
+							"name": "Category",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/categories.php",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"categories.php"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Category",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"category_name\" : \"Electronics\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/categories.php",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"categories.php"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Category",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"category_name\" : \"Electronic\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/categories.php/5",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"categories.php",
+										"5"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Category",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/categories.php/",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"categories.php",
+										""
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Borrowing Management Module API",
+			"item": [
+				{
+					"name": "Borrow Requests",
+					"item": [
+						{
+							"name": "Get All Borrow Requests",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/borrow-request.php",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"borrow-request.php"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Borrow Request By ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/borrow-request.php/10",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"borrow-request.php",
+										"10"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Borrow Request By user ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/borrow-request.php/?user_id=4",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"borrow-request.php",
+										""
+									],
+									"query": [
+										{
+											"key": "user_id",
+											"value": "4"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Borrow Request",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"user_id\": 4,\r\n  \"remarks\": \"For upcoming event\",\r\n  \"items\": [\r\n    { \"item_id\": 1, \"quantity\": 1 },\r\n    { \"item_id\": 2, \"quantity\": 1 }\r\n  ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/borrow-request.php/",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"borrow-request.php",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Request Details by Borrower",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"remarks\": \"Updated remarks for event\",\r\n  \"items\": [\r\n    { \"item_id\": 3, \"quantity\": 2 },\r\n    { \"item_id\": 5, \"quantity\": 1 },\r\n    { \"item_id\": 4, \"quantity\": 1 }\r\n  ]\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/borrow-request.php/faculty/1",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"borrow-request.php",
+										"faculty",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Request Details by Admin",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"status\": \"APPROVED\",\r\n  \"handled_by\": 1\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/borrow-request.php/admin/10",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"borrow-request.php",
+										"admin",
+										"10"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Borrow Request by ID",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/borrow-request.php/1",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"borrow-request.php",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Borrow Request Items",
+					"item": [
+						{
+							"name": "Get All Borrowed Items",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/borrow-request-items.php/",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"borrow-request-items.php",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Borrowed Item By ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/borrow-request-items.php/?unit_id=6",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"borrow-request-items.php",
+										""
+									],
+									"query": [
+										{
+											"key": "unit_id",
+											"value": "6"
+										},
+										{
+											"key": "request_id",
+											"value": "10",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Assign Item units to Requests",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"request_id\": 10,\r\n  \"assigned_units\": [\r\n    {\r\n      \"unit_id\": \"1\",\r\n      \"item_condition_out\": \"GOOD\"\r\n    },\r\n    {\r\n      \"unit_id\": \"6\",\r\n      \"item_condition_out\": \"GOOD\"\r\n    }\r\n  ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/borrow-request-items.php",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"borrow-request-items.php"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Assigned Unit",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"unit_id\": 1,\r\n  \"item_condition_out\": \"EXCELLENT\",\r\n  \"status\": \"IN_USE\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/borrow-request-items.php/assigned-unit/1",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"borrow-request-items.php",
+										"assigned-unit",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Item unit status / Return",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"request_id\": 10,\r\n  \"returned_units\": [\r\n    {\r\n      \"unit_id\": 6,\r\n      \"damage_status\": \"UNDAMAGED\",\r\n      \"damage_notes\": \"\"\r\n    }\r\n  ]\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/borrow-request-items.php/return/10",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"borrow-request-items.php",
+										"return",
+										"10"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Assign Item in Request",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"request_id\": \"10\",\r\n    \"unit_id\": \"1\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost/toolshare-server/api/routes/borrow-request-items.php/10/1",
+									"host": [
+										"localhost"
+									],
+									"path": [
+										"toolshare-server",
+										"api",
+										"routes",
+										"borrow-request-items.php",
+										"10",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "User Management Module",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost/toolshare-server/api/routes/user.php/",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"toolshare-server",
+								"api",
+								"routes",
+								"user.php",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost/toolshare-server/api/routes/user.php/1",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"toolshare-server",
+								"api",
+								"routes",
+								"user.php",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"username\": \"newadmin\",\r\n  \"name\": \"New Admin\",\r\n  \"password\": \"securepassword\",\r\n  \"email\": \"newadmin@example.com\",\r\n  \"role_id\": 2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost/toolshare-server/api/routes/user.php",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"toolshare-server",
+								"api",
+								"routes",
+								"user.php"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"username\": \"superadmin\",\r\n  \"name\": \"Jerry Castrudes\",\r\n  \"password\": \"password123\",\r\n  \"email\": \"newadmin@example.com\",\r\n  \"role_id\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost/toolshare-server/api/routes/user.php/1",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"toolshare-server",
+								"api",
+								"routes",
+								"user.php",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "localhost/toolshare-server/api/routes/user.php",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"toolshare-server",
+								"api",
+								"routes",
+								"user.php"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
