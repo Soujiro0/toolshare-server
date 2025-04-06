@@ -3,374 +3,369 @@ require_once "Database.php";
 
 class BorrowRequest
 {
-
-    public $user_id;
-    public $status;
-    public $remarks;
-
     private $db;
 
     public function __construct()
     {
         $this->db = Database::getInstance();
     }
+
+    public function createRequest($user_id, $remarks, $items = [])
+    {
+        try {
+            $this->db->beginTransaction();
+
+            $stmt = $this->db->prepare("INSERT INTO tbl_borrow_requests (user_id, remarks) VALUES (:user_id, :remarks)");
+            $stmt->bindParam(':user_id', $user_id);
+            $stmt->bindParam(':remarks', $remarks);
+            $stmt->execute();
+            $request_id = $this->db->lastInsertId();
+
+            foreach ($items as $item) {
+                $stmtItem = $this->db->prepare("INSERT INTO tbl_borrow_request_summary (request_id, item_id, quantity) VALUES (:request_id, :item_id, :quantity)");
+                $stmtItem->bindParam(':request_id', $request_id);
+                $stmtItem->bindParam(':item_id', $item->item_id);
+                $stmtItem->bindParam(':quantity', $item->quantity);
+                $stmtItem->execute();
+            }
+
+            $this->db->commit();
+            return $request_id;
+        } catch (PDOException $e) {
+            $this->db->rollBack();
+            return false;
+        }
+    }
+
     public function getAll()
     {
         try {
             $stmt = $this->db->prepare("
-                SELECT 
-                    br.*,
-                    u.name AS borrower_name, 
-                    h.name AS handled_by_name
-                FROM tbl_borrow_requests br
-                JOIN tbl_users u ON u.user_id = br.user_id
-                LEFT JOIN tbl_users h ON h.user_id = br.handled_by
-            ");
+            SELECT 
+                br.request_id,
+                br.user_id,
+                u.name AS requested_by,
+                br.status,
+                br.remarks,
+                br.handled_by,
+                h.name AS handled_by_name, -- NEW: name of handler
+                br.request_date,
+                br.return_date,
+                br.processed_date,
+                br.date_created,
+                br.date_updated,
+                i.item_id,
+                i.name AS item_name,
+                brs.quantity
+            FROM tbl_borrow_requests br
+            JOIN tbl_users u ON br.user_id = u.user_id
+            LEFT JOIN tbl_users h ON br.handled_by = h.user_id -- NEW JOIN
+            LEFT JOIN tbl_borrow_request_summary brs ON br.request_id = brs.request_id
+            LEFT JOIN tbl_items i ON brs.item_id = i.item_id
+            ORDER BY br.date_created DESC
+        ");
             $stmt->execute();
-            $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Fetch items for each request
-            foreach ($requests as &$request) {
-                $stmtItems = $this->db->prepare("
-                    SELECT 
-                        bri.request_item_id,
-                        bri.request_id,
-                        bri.item_id,
-                        bri.quantity,
-                        bri.item_condition_out,
-                        bri.item_condition_in,
-                        bri.damage_notes,
-                        bri.returned_date,
-                        bri.date_created,
-                        bri.date_updated,
-                        i.name AS name,
-                        i.unit
-                    FROM tbl_borrow_request_items bri
-                    JOIN tbl_items i ON i.item_id = bri.item_id
-                    WHERE bri.request_id = :request_id
-                ");
-                $stmtItems->bindParam(':request_id', $request['request_id']);
-                $stmtItems->execute();
-                $request['borrowed_items'] = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
+            // Group items per request_id
+            $requests = [];
+            foreach ($rows as $row) {
+                $reqId = $row['request_id'];
+
+                if (!isset($requests[$reqId])) {
+                    $requests[$reqId] = [
+                        "request_id" => $row['request_id'],
+                        "user_id" => $row['user_id'],
+                        "requested_by" => $row['requested_by'],
+                        "status" => $row['status'],
+                        "remarks" => $row['remarks'],
+                        "handled_by" => $row['handled_by'], // ✅ Correct handler ID
+                        "handled_by_name" => $row['handled_by_name'],
+                        "request_date" => $row['request_date'],
+                        "return_date" => $row['return_date'],
+                        "processed_date" => $row['processed_date'],
+                        "date_created" => $row['date_created'],
+                        "date_updated" => $row['date_updated'],
+                        "requested_items" => []
+                    ];
+                }
+
+                if ($row['item_id']) {
+                    $requests[$reqId]["requested_items"][] = [
+                        "item_id" => $row['item_id'],
+                        "item_name" => $row['item_name'],
+                        "quantity" => $row['quantity']
+                    ];
+                }
             }
-
-            return $requests;
-        } catch (Exception $e) {
-            error_log("Error fetching borrow requests: " . $e->getMessage());
-            return [];
+            return array_values($requests);
+        } catch (PDOException $e) {
+            return false;
         }
     }
 
-    public function getById($id)
+    public function getById($request_id)
     {
         try {
-            // Fetch the borrow request with borrower and handler names
             $stmt = $this->db->prepare("
-                SELECT 
-                    br.*, 
-                    u.name AS user_name,  -- Borrower name
-                    h.name AS handled_by_name  -- Handler name (can be NULL)
-                FROM tbl_borrow_requests br
-                JOIN tbl_users u ON u.user_id = br.user_id
-                LEFT JOIN tbl_users h ON h.user_id = br.handled_by
-                WHERE br.request_id = :request_id
-            ");
-            $stmt->bindParam(':request_id', $id, PDO::PARAM_INT);
-            $stmt->execute();
-            $request = $stmt->fetch(PDO::FETCH_ASSOC);
+            SELECT 
+                br.request_id,
+                br.user_id,
+                u.name AS requested_by,
+                br.status,
+                br.remarks,
+                br.handled_by,
+                h.name AS handled_by_name, -- NEW: name of handler
+                br.request_date,
+                br.return_date,
+                br.processed_date,
+                br.date_created,
+                br.date_updated,
+                i.item_id,
+                i.name AS item_name,
+                brs.quantity
+            FROM tbl_borrow_requests br
+            JOIN tbl_users u ON br.user_id = u.user_id
+            LEFT JOIN tbl_users h ON br.handled_by = h.user_id -- NEW JOIN
+            LEFT JOIN tbl_borrow_request_summary brs ON br.request_id = brs.request_id
+            LEFT JOIN tbl_items i ON brs.item_id = i.item_id
+            WHERE br.request_id = :request_id
+            ORDER BY br.date_created DESC
+        ");
 
-            // If no request found, return an empty response
-            if (!$request) {
+            $stmt->bindParam(':request_id', $request_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (!$rows) {
                 return null;
             }
 
-            // Fetch borrowed items for the request
-            $stmtItems = $this->db->prepare("
-                SELECT 
-                    bri.request_item_id,
-                    bri.request_id,
-                    bri.item_id,
-                    bri.quantity,
-                    bri.item_condition_out,
-                    bri.item_condition_in,
-                    bri.damage_notes,
-                    bri.returned_date,
-                    bri.date_created,
-                    bri.date_updated,
-                    i.name AS item_name,
-                    i.unit
-                FROM tbl_borrow_request_items bri
-                JOIN tbl_items i ON i.item_id = bri.item_id
-                WHERE bri.request_id = :request_id
-            ");
-            $stmtItems->bindParam(':request_id', $id, PDO::PARAM_INT);
-            $stmtItems->execute();
-            $request['borrowed_items'] = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
+            // Build request data with grouped items
+            $request = [
+                "request_id" => $rows[0]['request_id'],
+                "user_id" => $rows[0]['user_id'],
+                "requested_by" => $rows[0]['requested_by'],
+                "status" => $rows[0]['status'],
+                "remarks" => $rows[0]['remarks'],
+                "handled_by" => $rows[0]['handled_by'], // ✅ Correct handler ID
+                "handled_by_name" => $rows[0]['handled_by_name'],
+                "request_date" => $rows[0]['request_date'],
+                "return_date" => $rows[0]['return_date'],
+                "processed_date" => $rows[0]['processed_date'],
+                "date_created" => $rows[0]['date_created'],
+                "date_updated" => $rows[0]['date_updated'],
+                "requested_items" => []
+            ];
+
+            foreach ($rows as $row) {
+                if ($row['item_id']) {
+                    $request["requested_items"][] = [
+                        "item_id" => $row['item_id'],
+                        "item_name" => $row['item_name'],
+                        "quantity" => $row['quantity']
+                    ];
+                }
+            }
 
             return $request;
-        } catch (Exception $e) {
-            error_log("Error fetching borrow request: " . $e->getMessage());
-            return null;
+        } catch (PDOException $e) {
+            return false;
         }
     }
 
     public function getByUserId($user_id)
     {
         try {
-            $stmt = $this->db->prepare("SELECT * FROM tbl_borrow_requests WHERE user_id = :user_id");
+            $stmt = $this->db->prepare("
+            SELECT 
+                br.request_id,
+                br.user_id,
+                u.name AS requested_by,
+                br.status,
+                br.remarks,
+                br.handled_by,
+                h.name AS handled_by_name, -- NEW: name of handler
+                br.request_date,
+                br.return_date,
+                br.processed_date,
+                br.date_created,
+                br.date_updated,
+                i.item_id,
+                i.name AS item_name,
+                brs.quantity
+            FROM tbl_borrow_requests br
+            JOIN tbl_users u ON br.user_id = u.user_id
+            LEFT JOIN tbl_users h ON br.handled_by = h.user_id -- NEW JOIN
+            LEFT JOIN tbl_borrow_request_summary brs ON br.request_id = brs.request_id
+            LEFT JOIN tbl_items i ON brs.item_id = i.item_id
+            WHERE br.user_id = :user_id
+            ORDER BY br.date_created DESC
+            ");
             $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
             $stmt->execute();
-            $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Fetch associated items for each borrow request
-            foreach ($requests as &$request) {
-                $stmtItems = $this->db->prepare("
-                    SELECT 
-                        bri.request_item_id,
-                        bri.request_id,
-                        bri.item_id,
-                        bri.quantity,
-                        bri.item_condition_out,
-                        bri.item_condition_in,
-                        bri.damage_notes,
-                        bri.returned_date,
-                        bri.date_created,
-                        bri.date_updated,
-                        i.name AS name,
-                        i.unit
-                    FROM tbl_borrow_request_items bri
-                    JOIN tbl_items i ON i.item_id = bri.item_id
-                    WHERE bri.request_id = :request_id
-                ");
-                $stmtItems->bindParam(':request_id', $request['request_id'], PDO::PARAM_INT);
-                $stmtItems->execute();
-                $request['borrowed_items'] = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
+            if (!$rows) {
+                return [];
             }
 
-            return $requests;
-        } catch (Exception $e) {
-            error_log("Error fetching borrow requests for user $user_id: " . $e->getMessage());
-            return [];
-        }
-    }
+            $requests = [];
 
+            foreach ($rows as $row) {
+                $reqId = $row['request_id'];
 
-    public function create()
-    {
-        try {
-            $stmt = $this->db->prepare("INSERT INTO tbl_borrow_requests (user_id, remarks) VALUES (:user_id, :remarks)");
-            $stmt->bindParam(':user_id', $this->user_id);
-            $stmt->bindParam(':remarks', $this->remarks);
+                if (!isset($requests[$reqId])) {
+                    $requests[$reqId] = [
+                        "request_id" => $rows[0]['request_id'],
+                        "user_id" => $rows[0]['user_id'],
+                        "requested_by" => $rows[0]['requested_by'],
+                        "status" => $rows[0]['status'],
+                        "remarks" => $rows[0]['remarks'],
+                        "handled_by" => $rows[0]['handled_by'], // ✅ Correct handler ID
+                        "handled_by_name" => $rows[0]['handled_by_name'],
+                        "request_date" => $rows[0]['request_date'],
+                        "return_date" => $rows[0]['return_date'],
+                        "processed_date" => $rows[0]['processed_date'],
+                        "date_created" => $rows[0]['date_created'],
+                        "date_updated" => $rows[0]['date_updated'],
+                        "requested_items" => []
+                    ];
+                }
 
-            if ($stmt->execute()) {
-                return $this->db->lastInsertId(); // ✅ Return last inserted request_id
-            } else {
-                return false;
+                if ($row['item_id']) {
+                    $requests[$reqId]["requested_items"][] = [
+                        "item_id" => $row['item_id'],
+                        "item_name" => $row['item_name'],
+                        "quantity" => $row['quantity']
+                    ];
+                }
             }
-        } catch (Exception $e) {
-            error_log("Error saving borrow request: " . $e->getMessage());
+            return array_values($requests);
+        } catch (PDOException $e) {
             return false;
         }
     }
 
-
-    public function update($id, $data)
+    public function getByIdRaw($request_id)
     {
         try {
-            $stmt = $this->db->prepare("UPDATE tbl_borrow_requests SET user_id = :user_id, status = :status, remarks = :remarks WHERE request_id = :request_id");
-            $stmt->bindParam(':user_id', $data->user_id);
-            $stmt->bindParam(':status', $data->status);
-            $stmt->bindParam(':remarks', $data->remarks);
-            $stmt->bindParam(':request_id', $id);
-            return $stmt->execute();
-        } catch (Exception $e) {
-            error_log("Error updating borrow request: " . $e->getMessage());
+            $stmt = $this->db->prepare("SELECT * FROM tbl_borrow_requests WHERE request_id = :request_id");
+            $stmt->bindParam(':request_id', $request_id, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("getByIdRaw Error: " . $e->getMessage());
             return false;
         }
     }
 
-    public function updateRequestAndApprove($id, $data)
+    public function updateRemarks($request_id, $remarks)
     {
         try {
-            // Begin transaction
-            $this->db->beginTransaction();
-
-            // Fetch existing request status
-            $stmtStatus = $this->db->prepare("SELECT status FROM tbl_borrow_requests WHERE request_id = :request_id");
-            $stmtStatus->bindParam(':request_id', $id, PDO::PARAM_INT);
-            $stmtStatus->execute();
-            $existingRequest = $stmtStatus->fetch(PDO::FETCH_ASSOC);
-
-            if (!$existingRequest) {
-                throw new Exception("Request not found.");
-            }
-
-            $oldStatus = strtoupper($existingRequest['status']);
-            $newStatus = strtoupper($data->status);
-
-            // Determine updates based on status change
-            $processed_date = null;
-            $return_date = null;
-
-            if (in_array($newStatus, ['APPROVED', 'REJECTED', 'BORROWED']) && $oldStatus !== $newStatus) {
-                $processed_date = date('Y-m-d H:i:s'); // Set only if changed
-            }
-
-            if ($newStatus === 'RETURNED' && $oldStatus !== 'RETURNED') {
-                $return_date = date('Y-m-d H:i:s');
-            }
-
-            // Update the borrow request record
             $stmt = $this->db->prepare("
-            UPDATE tbl_borrow_requests 
-            SET 
-                user_id = :user_id, 
-                status = :status, 
-                processed_date = COALESCE(:processed_date, processed_date),
-                return_date = COALESCE(:return_date, return_date),
-                remarks = :remarks, 
-                handled_by = :handled_by
-            WHERE request_id = :request_id
-        ");
+                UPDATE tbl_borrow_requests 
+                SET remarks = :remarks, date_updated = NOW()
+                WHERE request_id = :request_id
+            ");
+            $stmt->bindParam(':remarks', $remarks);
+            $stmt->bindParam(':request_id', $request_id);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("updateRemarks Error: " . $e->getMessage());
+            return false;
+        }
+    }
 
-            // Bind parameters
-            $stmt->bindValue(':user_id', (int) $data->user_id, PDO::PARAM_INT);
-            $stmt->bindValue(':status', $data->status, PDO::PARAM_STR);
-            $stmt->bindValue(':processed_date', $processed_date, $processed_date ? PDO::PARAM_STR : PDO::PARAM_NULL);
-            $stmt->bindValue(':return_date', $return_date, $return_date ? PDO::PARAM_STR : PDO::PARAM_NULL);
-            $stmt->bindValue(':handled_by', (int) $data->handled_by, PDO::PARAM_INT);
-            $stmt->bindValue(':request_id', (int) $id, PDO::PARAM_INT);
-            $stmt->bindValue(':remarks', !empty($data->remarks) ? $data->remarks : null, PDO::PARAM_NULL);
+    public function syncRequestItems($request_id, $items)
+    {
+        try {
+            // Get existing items
+            $stmt = $this->db->prepare("SELECT item_id FROM tbl_borrow_request_summary WHERE request_id = :request_id");
+            $stmt->bindParam(':request_id', $request_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $existingItems = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-            if (!$stmt->execute()) {
-                error_log("SQL Error: " . json_encode($stmt->errorInfo()));
-                $this->db->rollBack();
-                return false;
-            }
+            $incomingItemIds = array_column($items, 'item_id');
 
-            // Fetch borrowed items
-            $stmtItems = $this->db->prepare("SELECT item_id, quantity FROM tbl_borrow_request_items WHERE request_id = :request_id");
-            $stmtItems->bindParam(':request_id', $id, PDO::PARAM_INT);
-            $stmtItems->execute();
-            $items = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
-
-            // Adjust inventory only if the status actually changed
-            if ($oldStatus !== $newStatus) {
-                if ($newStatus === 'BORROWED') {
-                    foreach ($items as $item) {
-                        $this->subtractInventory($item['item_id'], $item['quantity']);
-                    }
-                } elseif ($newStatus === 'RETURNED') {
-                    foreach ($items as $item) {
-                        $this->addInventory($item['item_id'], $item['quantity']);
-                    }
-
-                    // Set returned_date for each borrowed item in tbl_borrow_request_items
-                    $stmtUpdateItems = $this->db->prepare("
-                    UPDATE tbl_borrow_request_items
-                    SET returned_date = :returned_date
-                    WHERE request_id = :request_id
-                ");
-                    $stmtUpdateItems->bindValue(':returned_date', $return_date, PDO::PARAM_STR);
-                    $stmtUpdateItems->bindValue(':request_id', $id, PDO::PARAM_INT);
-                    $stmtUpdateItems->execute();
+            // Delete removed items
+            foreach ($existingItems as $existingId) {
+                if (!in_array($existingId, $incomingItemIds)) {
+                    $delStmt = $this->db->prepare("DELETE FROM tbl_borrow_request_summary WHERE request_id = :request_id AND item_id = :item_id");
+                    $delStmt->bindParam(':request_id', $request_id, PDO::PARAM_INT);
+                    $delStmt->bindParam(':item_id', $existingId, PDO::PARAM_INT);
+                    $delStmt->execute();
                 }
             }
 
-            // Commit transaction
-            $this->db->commit();
+            // Insert or update items
+            foreach ($items as $item) {
+                $item_id = $item->item_id;
+                $quantity = $item->quantity;
+
+                $checkStmt = $this->db->prepare("SELECT COUNT(*) FROM tbl_borrow_request_summary WHERE request_id = :request_id AND item_id = :item_id");
+                $checkStmt->bindParam(':request_id', $request_id, PDO::PARAM_INT);
+                $checkStmt->bindParam(':item_id', $item_id, PDO::PARAM_INT);
+                $checkStmt->execute();
+                $exists = $checkStmt->fetchColumn() > 0;
+
+                if ($exists) {
+                    $updateStmt = $this->db->prepare("UPDATE tbl_borrow_request_summary SET quantity = ? WHERE request_id = ? AND item_id = ?");
+                    $updateStmt->execute([$quantity, $request_id, $item_id]);
+                } else {
+                    $insertStmt = $this->db->prepare("INSERT INTO tbl_borrow_request_summary (request_id, item_id, quantity) VALUES (?, ?, ?)");
+                    $insertStmt->execute([$request_id, $item_id, $quantity]);
+                }
+            }
             return true;
-        } catch (Exception $e) {
-            // Rollback on failure
-            $this->db->rollBack();
-            error_log("Error in updateRequestAndApprove: " . $e->getMessage());
+        } catch (PDOException $e) {
+            error_log("syncRequestItems Error: " . $e->getMessage());
             return false;
         }
     }
 
-
-    public function delete($id)
+    public function updateStatusWithReturnDate($request_id, $status, $handled_by, $returned_date)
     {
         try {
-            $stmt = $this->db->prepare("DELETE FROM tbl_borrow_requests WHERE request_id = :request_id");
-            $stmt->bindParam(':request_id', $id);
+            $sql = "
+                UPDATE tbl_borrow_requests 
+                SET status = :status,
+                    handled_by = :handled_by,
+                    processed_date = NOW(),
+                    date_updated = NOW()
+            ";
+
+            if ($returned_date !== null) {
+                $sql .= ", return_date = :return_date";
+            }
+
+            $sql .= " WHERE request_id = :request_id";
+
+            $stmt = $this->db->prepare($sql);
+
+            $stmt->bindParam(':status', $status);
+            $stmt->bindParam(':handled_by', $handled_by);
+            $stmt->bindParam(':request_id', $request_id);
+
+            if ($returned_date !== null) {
+                $stmt->bindParam(':return_date', $returned_date);
+            }
+
             return $stmt->execute();
-        } catch (Exception $e) {
-            error_log("Error deleting borrow request: " . $e->getMessage());
+        } catch (PDOException $e) {
+            error_log("updateStatusWithReturnDate Error: " . $e->getMessage());
             return false;
         }
     }
 
-    private function subtractInventory($itemId, $requestedQuantity)
+    public function delete($request_id)
     {
-        // Lock row
-        $stmtInventory = $this->db->prepare("SELECT quantity FROM tbl_items WHERE item_id = :item_id FOR UPDATE");
-        $stmtInventory->bindParam(':item_id', $itemId);
-        $stmtInventory->execute();
-        $inventory = $stmtInventory->fetch(PDO::FETCH_ASSOC);
-
-        if (!$inventory) {
-            throw new Exception("Item not found in inventory for item_id: " . $itemId);
-        }
-
-        // Check if sufficient quantity is available
-        if ($inventory['quantity'] < $requestedQuantity) {
-            throw new Exception("Insufficient quantity for item_id: " . $itemId);
-        }
-
-        // Subtract the requested quantity
-        $stmtUpdate = $this->db->prepare("UPDATE tbl_items SET quantity = quantity - :reqQty WHERE item_id = :item_id");
-        $stmtUpdate->bindParam(':reqQty', $requestedQuantity);
-        $stmtUpdate->bindParam(':item_id', $itemId);
-        $stmtUpdate->execute();
-
-        // Update status based on the new quantity
-        $this->setItemStatus($itemId);
-    }
-
-    private function addInventory($itemId, $returnedQuantity)
-    {
-        // Lock row
-        $stmtInventory = $this->db->prepare("SELECT quantity FROM tbl_items WHERE item_id = :item_id FOR UPDATE");
-        $stmtInventory->bindParam(':item_id', $itemId);
-        $stmtInventory->execute();
-        $inventory = $stmtInventory->fetch(PDO::FETCH_ASSOC);
-
-        if (!$inventory) {
-            throw new Exception("Item not found in inventory for item_id: " . $itemId);
-        }
-
-        // Add the returned quantity back
-        $stmtUpdate = $this->db->prepare("UPDATE tbl_items SET quantity = quantity + :retQty WHERE item_id = :item_id");
-        $stmtUpdate->bindParam(':retQty', $returnedQuantity);
-        $stmtUpdate->bindParam(':item_id', $itemId);
-        $stmtUpdate->execute();
-
-        // Update status based on the new quantity
-        $this->setItemStatus($itemId);
-    }
-
-    private function setItemStatus($itemId)
-    {
-        // Retrieve the new quantity
-        $stmtCheck = $this->db->prepare("SELECT quantity FROM tbl_items WHERE item_id = :item_id");
-        $stmtCheck->bindParam(':item_id', $itemId);
-        $stmtCheck->execute();
-        $newInventory = $stmtCheck->fetch(PDO::FETCH_ASSOC);
-
-        if ($newInventory) {
-            // Determine new status based on quantity value
-            if ($newInventory['quantity'] == 0) {
-                $newStatus = 'IN_USE';
-            } else {
-                $newStatus = 'AVAILABLE';
-            }
-
-            // Update the status column accordingly
-            $stmtStatus = $this->db->prepare("UPDATE tbl_items SET status = :newStatus WHERE item_id = :item_id");
-            $stmtStatus->bindParam(':newStatus', $newStatus);
-            $stmtStatus->bindParam(':item_id', $itemId);
-            $stmtStatus->execute();
+        try {
+            $stmt = $this->db->prepare("DELETE FROM tbl_borrow_requests WHERE request_id = ?");
+            return $stmt->execute([$request_id]);
+        } catch (PDOException $e) {
+            error_log("deleteRequest Error: " . $e->getMessage());
+            return false;
         }
     }
 }

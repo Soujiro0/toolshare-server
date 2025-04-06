@@ -8,54 +8,64 @@ require_once __DIR__ . '/../auth/middleware.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $controller = new BorrowRequestItemController();
 
-$requestUri = strtok($_SERVER['REQUEST_URI'], '?'); 
-$segments = explode('/', trim($requestUri, '/')); 
-$itemRequestId = isset($segments[4]) ? intval($segments[4]) : null;
+$requestUri = strtok($_SERVER['REQUEST_URI'], '?');
+$segments = explode('/', trim($requestUri, '/'));
+$unitId = isset($segments[4]) ? intval($segments[4]) : null;
 
 switch ($method) {
     case 'GET':
-        if ($itemRequestId) {
-            if (isset($_GET['history']) && $_GET['history'] == 'true') {
-                $controller->getBorrowHistoryByItemId($itemRequestId);
-            } else {
-                $controller->getBorrowRequestItemById($itemRequestId);
-            }
-        } else { 
-            $controller->getAllBorrowRequestItems();
+        if (isset($_GET['unit_id'])) {
+            $unitId = intval($_GET['unit_id']);
+            $controller->getAssignedUnitById($unitId);
+        } elseif (isset($_GET['request_id'])) {
+            $request_id = intval($_GET['request_id']);
+            $controller->getAssignedUnitRequestId($request_id);
+        } else {
+            $controller->getAllAssignedUnits();
         }
         break;
 
+
     case 'POST':
-        $data = json_decode(file_get_contents("php://input"));
-        if (!$data) {
+        $payload = json_decode(file_get_contents('php://input'));
+        if (isset($payload->request_id) && isset($payload->assigned_units)) {
+            $controller->assignUnits($payload);
+        } else {
             http_response_code(400);
-            echo json_encode(["message" => "Invalid JSON payload"]);
-            exit;
+            echo json_encode(['error' => 'Invalid payload']);
         }
-        $controller->createBorrowRequestItem($data);
         break;
 
     case 'PUT':
-        if ($itemRequestId) {
-            $data = json_decode(file_get_contents("php://input"));
-            if (!$data) {
-                http_response_code(400);
-                echo json_encode(["message" => "Invalid JSON payload"]);
-                exit;
-            }
-            $controller->updateBorrowRequestItem($itemRequestId, $data);
+        // Route for updating assigned unit details by admin
+        if (isset($segments[4]) && $segments[4] == 'assigned-unit' && isset($segments[5])) {
+            $payload = json_decode(file_get_contents('php://input'));
+            // $payload->unit_id = $segments[3];  // Unit ID from the URL
+            $controller->updateAssignedUnit($payload);
+        } elseif (isset($segments[4]) && $segments[4] === 'return' && isset($segments[5])) {
+            $payload = json_decode(file_get_contents('php://input'));
+            $controller->returnAllItems($payload);
         } else {
             http_response_code(400);
-            echo json_encode(["message" => "Missing borrow request item ID"]);
+            echo json_encode(['error' => 'Invalid request']);
         }
         break;
 
     case 'DELETE':
-        if ($itemRequestId) {
-            $controller->deleteBorrowRequestItem($itemRequestId);
+        // Handle DELETE request to delete assigned item
+        if (isset($segments[4]) && isset($segments[5])) {
+            $request_id = intval($segments[4]);
+            $unit_id = intval($segments[5]);
+        
+            $payload = new stdClass();
+            $payload->request_id = $request_id;
+            $payload->unit_id = $unit_id;
+        
+            // Call the deleteAssignedItem method
+            $controller->deleteAssignedItem($payload);
         } else {
             http_response_code(400);
-            echo json_encode(["message" => "Missing borrow request item ID"]);
+            echo json_encode(['error' => 'Invalid request or parameters']);
         }
         break;
 

@@ -1,22 +1,24 @@
 <?php
 header("Content-Type: application/json");
 
-$basePath = '/toolshare-server'; // Change this if your project is in a different subdirectory
-$requestUri = str_replace($basePath, '', strtok($_SERVER['REQUEST_URI'], '?')); 
+// Adjust base path if your API is not in the root directory
+$basePath = '/toolshare-server'; // Update based on actual directory if needed
+
+// Normalize URI (remove base path and query string)
+$requestUri = str_replace($basePath, '', strtok($_SERVER['REQUEST_URI'], '?'));
 
 // Define route mappings
 $routes = [
-    '/api/login' => 'routes/login.php',
-    '/api/items' => 'routes/items.php',
+    '/api/login'      => 'routes/login.php',
+    '/api/items'      => 'routes/items.php',
     '/api/categories' => 'routes/categories.php',
-    '/api/user' => 'routes/user.php'
+    '/api/user'       => 'routes/user.php'
 ];
 
-// Route handling
-if (array_key_exists($requestUri, $routes)) {
-    require $routes[$requestUri];
+// Handle route
+if (isset($routes[$requestUri])) {
+    require __DIR__ . '/' . $routes[$requestUri];
 } else {
     http_response_code(404);
-    echo json_encode(["error" => "Endpoint not found"]);
+    echo json_encode(["error" => "Endpoint not found", "requested" => $requestUri]);
 }
-
