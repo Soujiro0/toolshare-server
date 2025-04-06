@@ -101,8 +101,6 @@ class User
         return $stmt->execute();
     }
 
-
-
     public function delete($id)
     {
         try {

@@ -1,6 +1,6 @@
 <?php
-// api/routes/items.php
 header("Content-Type: application/json");
+
 require_once __DIR__ . '/../cors.php';
 require_once __DIR__ . '/../controllers/BorrowRequestController.php';
 require_once __DIR__ . '/../auth/middleware.php';
@@ -8,21 +8,20 @@ require_once __DIR__ . '/../auth/middleware.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $controller = new BorrowRequestController();
 
-$requestUri = strtok($_SERVER['REQUEST_URI'], '?'); 
-$segments = explode('/', trim($requestUri, '/')); 
-$requestId = isset($segments[count($segments) - 1]) && is_numeric($segments[count($segments) - 1]) 
-    ? intval($segments[count($segments) - 1]) 
+$requestUri = strtok($_SERVER['REQUEST_URI'], '?');
+$segments = explode('/', trim($requestUri, '/'));
+$requestId = isset($segments[count($segments) - 1]) && is_numeric($segments[count($segments) - 1])
+    ? intval($segments[count($segments) - 1])
     : null;
 
 switch ($method) {
     case 'GET':
-        if ($requestId) { 
-            $items = $controller->getRequestById($requestId);
+        if ($requestId) {
+            $controller->getRequestById($requestId);
         } elseif (isset($_GET['user_id'])) {
-            $user_id = intval($_GET['user_id']);
-            $items = $controller->getRequestByUserId($user_id);
-        } else { 
-            $items = $controller->getAllRequest();
+            $controller->getRequestByUserId(intval($_GET['user_id']));
+        } else {
+            $controller->getAllRequest();
         }
         break;
 
@@ -44,7 +43,15 @@ switch ($method) {
                 echo json_encode(["message" => "Invalid JSON payload"]);
                 exit;
             }
-            $controller->updateRequest($requestId, $data);
+
+            if (isset($segments[4]) && $segments[4] === 'faculty') {
+                $controller->updateRequestByFaculty(intval($segments[5]), $data);
+            } elseif (isset($segments[4]) && $segments[4] === 'admin') {
+                $controller->updateRequestByAdmin(intval($segments[5]), $data);
+            } else {
+                http_response_code(400);
+                echo json_encode(["message" => "Invalid request type"]);
+            }
         } else {
             http_response_code(400);
             echo json_encode(["message" => "Missing request ID"]);
