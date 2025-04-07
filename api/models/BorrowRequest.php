@@ -93,7 +93,7 @@ class BorrowRequest
                 if ($row['item_id']) {
                     $requests[$reqId]["requested_items"][] = [
                         "item_id" => $row['item_id'],
-                        "item_name" => $row['item_name'],
+                        "name" => $row['item_name'],
                         "quantity" => $row['quantity']
                     ];
                 }
@@ -162,7 +162,7 @@ class BorrowRequest
                 if ($row['item_id']) {
                     $request["requested_items"][] = [
                         "item_id" => $row['item_id'],
-                        "item_name" => $row['item_name'],
+                        "name" => $row['item_name'],
                         "quantity" => $row['quantity']
                     ];
                 }
@@ -217,18 +217,18 @@ class BorrowRequest
 
                 if (!isset($requests[$reqId])) {
                     $requests[$reqId] = [
-                        "request_id" => $rows[0]['request_id'],
-                        "user_id" => $rows[0]['user_id'],
-                        "requested_by" => $rows[0]['requested_by'],
-                        "status" => $rows[0]['status'],
-                        "remarks" => $rows[0]['remarks'],
-                        "handled_by" => $rows[0]['handled_by'], // ✅ Correct handler ID
-                        "handled_by_name" => $rows[0]['handled_by_name'],
-                        "request_date" => $rows[0]['request_date'],
-                        "return_date" => $rows[0]['return_date'],
-                        "processed_date" => $rows[0]['processed_date'],
-                        "date_created" => $rows[0]['date_created'],
-                        "date_updated" => $rows[0]['date_updated'],
+                        "request_id" => $row['request_id'],
+                        "user_id" => $row['user_id'],
+                        "requested_by" => $row['requested_by'],
+                        "status" => $row['status'],
+                        "remarks" => $row['remarks'],
+                        "handled_by" => $row['handled_by'], // ✅ Correct handler ID
+                        "handled_by_name" => $row['handled_by_name'],
+                        "request_date" => $row['request_date'],
+                        "return_date" => $row['return_date'],
+                        "processed_date" => $row['processed_date'],
+                        "date_created" => $row['date_created'],
+                        "date_updated" => $row['date_updated'],
                         "requested_items" => []
                     ];
                 }
@@ -236,7 +236,7 @@ class BorrowRequest
                 if ($row['item_id']) {
                     $requests[$reqId]["requested_items"][] = [
                         "item_id" => $row['item_id'],
-                        "item_name" => $row['item_name'],
+                        "name" => $row['item_name'],
                         "quantity" => $row['quantity']
                     ];
                 }

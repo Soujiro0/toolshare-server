@@ -340,35 +340,37 @@ class BorrowRequestItem
     }
 
     // Method to update return details (damage status and notes)
-    public function updateReturnDetails($unit_id, $damage_status, $damage_notes)
+    public function updateReturnDetails($request_id, $unit_id, $damage_status, $damage_notes)
     {
         try {
-            // Start a database transaction
             $this->db->beginTransaction();
-
-            // Update damage status and notes in tbl_borrow_request_items
+    
             $updateSql = "UPDATE tbl_borrow_request_items 
                           SET damage_status = :damage_status, damage_notes = :damage_notes, returned_date = NOW()
-                          WHERE unit_id = :unit_id";
-
+                          WHERE unit_id = :unit_id AND request_id = :request_id";
+    
             $stmt = $this->db->prepare($updateSql);
-
-            // Execute the query
+            
+    
             $stmt->execute([
                 ':unit_id' => $unit_id,
+                ':request_id' => $request_id,
                 ':damage_status' => $damage_status,
                 ':damage_notes' => $damage_notes
             ]);
-
-            // Commit the transaction
+    
+            if ($stmt->rowCount() === 0) {
+                throw new Exception("No record found for unit_id $unit_id and request_id $request_id.");
+            }
+    
             $this->db->commit();
             return true;
         } catch (Exception $e) {
-            // Rollback in case of error
             $this->db->rollBack();
             throw new Exception("Error updating return details: " . $e->getMessage());
         }
     }
+    
 
     // Method to update the unit status to 'AVAILABLE' after return
     public function updateUnitStatusToAvailable($unit_id)
