@@ -174,7 +174,12 @@ class BorrowRequestItemController
                 }
 
                 // Update return details for each unit and set its status to 'AVAILABLE'
-                $this->model->updateReturnDetails($unit->unit_id, $unit->damage_status, $unit->damage_notes);
+                $this->model->updateReturnDetails(
+                    $request_id,
+                    $unit->unit_id,
+                    $unit->damage_status,
+                    $unit->damage_notes
+                );
                 $this->model->updateUnitStatusToAvailable($unit->unit_id);
             }
 
