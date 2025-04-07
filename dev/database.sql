@@ -1,3 +1,5 @@
+-- V2.0.2
+
 CREATE DATABASE db_toolsharev2;
 USE db_toolsharev2;
 
